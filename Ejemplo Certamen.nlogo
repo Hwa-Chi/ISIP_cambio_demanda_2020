@@ -1,11 +1,11 @@
 breed [walkers walker]
 
-walkers-own [tpM1 tpM2 poS tp tpp pos1 pos2 tmp-entrega dinero]
+walkers-own [tpM1 tpM2 poS tp tpp pos1 pos2 tmp-entrega presupuesto-entrega presupuesto-M1 presupuesto-M2 oferta-M1 oferta-M2]
 ;
 ;
 ;
 ;
-patches-own [tpp1 tpp2]
+patches-own [tpp1 tpp2 costo-tmp-entrega costo-procesamiento ultima-subasta]
 globals [tiempo posiciones final ite ite2 max1 max2 max3]
 
 to setup
@@ -19,16 +19,18 @@ to setup
 
   ]
   diferenciacion
+  fijar-presupuesto-inicial
   posicion
   reset-ticks
 end
 
 to nodos
-  ask patch 1 0 [set pcolor blue set plabel "M1" set plabel-color white set tpp1 1 set tpp2 2]
+  ask patch 1 0 [set pcolor blue set plabel "M1" set plabel-color white set tpp1 1 set tpp2 2 ]
   ask patch 3 2 [set pcolor blue set plabel "M2" set plabel-color white set tpp1 3 set tpp2 8 set pcolor orange]
   ask patch 3 -2 [set pcolor blue set plabel "M4" set plabel-color white set tpp1 3 set tpp2 8 set pcolor orange]
   ask patch 3 0 [set pcolor blue set plabel "M3" set plabel-color white set tpp1 3 set tpp2 8 set pcolor orange]
   ask patch 5 0 [set pcolor blue set plabel "B0" set plabel-color white]
+  ask patches [set ultima-subasta 0]
 end
 
 to diferenciacion
@@ -40,6 +42,14 @@ to diferenciacion
   if P6 > 0 [ask n-of (P6 / Lote_min) walkers with [color = white] [set color brown set tpM1 T_P6_M1 set tpM2 T_P6_M2 set tmp-entrega Entrega_P6]]
 
 end
+
+to fijar-presupuesto-inicial
+  ask walkers [set presupuesto-entrega (Base-presupuesto-entrega / tmp-entrega) 
+              set presupuesto-M1 Base-presupuesto-procesamiento * tpM1   
+              set presupuesto-M2 Base-presupuesto-procesamiento * tpM2 
+              set oferta_M2 0]
+end
+
 
 to go
   ifelse count turtles-on patches with [pcolor = orange] = count turtles
@@ -127,12 +137,16 @@ to decision ;???
   ]
 end
 
-
-to negociar-posicion
-
+;TODO
+to subastar-uso-M1
+    ask walkers [set oferta_M1 (.9 * (presupuesto-entrega/2 + presupuesto-M1/2)) ]
+    ask with [plabel = "M1"] [set costo-procesamiento ]
 
 end
 
+to subastar-uso-M2
+
+end
 
 
 to makespan ;???
@@ -836,6 +850,36 @@ Llegada_pedido
 1
 0
 Number
+
+SLIDER
+710
+530
+908
+563
+Base-presupuesto-entrega
+Base-presupuesto-entrega
+0
+100
+50.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+944
+536
+1179
+569
+Base-presupuesto-procesamiento
+Base-presupuesto-procesamiento
+0
+100
+50.0
+1
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
