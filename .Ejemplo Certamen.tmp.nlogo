@@ -151,7 +151,7 @@ to TMFin ;???
 end
 
 to nueva_demanda
-  create-walkers (nP1 + nP2 + nP3 + nP4 + nP5 + nP6) / Lote_min [
+  create-walkers (nP1 + nP2 + nP3 + nP4 + nP5 + nP6 + nP7 + nP8 + nP9 + nP10 + nP11 + nP12) / Lote_min [
     set color white
     move-to patch 1 0
     set size 0.5 set heading 90
@@ -647,6 +647,17 @@ INPUTBOX
 1359
 494
 nP6
+0.0
+1
+0
+Number
+
+INPUTBOX
+1399
+76
+1449
+136
+nP7
 0.0
 1
 0
