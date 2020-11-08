@@ -1,6 +1,10 @@
 breed [walkers walker]
 
-walkers-own [tpM1 tpM2 pos tp tpp pos1 pos2]
+walkers-own [tpM1 tpM2 poS tp tpp pos1 pos2]
+;
+;
+;
+;
 patches-own [tpp1 tpp2]
 globals [tiempo posiciones final ite ite2 max1 max2 max3]
 
@@ -48,10 +52,10 @@ to go
     set final max [tp] of walkers
     makespan
     TMFin
-    ask turtles [move-to patch 1 0 set tp 0 set tpp 0 set tiempo 0] posicion ;show pos
+    ask turtles [move-to patch 1 0 set tp 0 set tpp 0 set tiempo 0] posicion ;show poS
   ][
 
-    ask walkers with [min [pos] of turtles-on patches with [plabel = "M1"] = pos][
+    ask walkers with [min [poS] of turtles-on patches with [plabel = "M1"] = poS][
       set tp tiempo
       ifelse tpp = round(tpM1 + (tpM1 * (1 - Tasa_M1))) [analisis] [set tiempo tiempo + 1 set tpp tpp + 1]
 
@@ -87,15 +91,16 @@ to posicion
   if funcion = "Entrenar" [
     let aux3 0
     set posiciones shuffle (n-values count walkers [i -> i])
-    foreach [who] of walkers [x -> ask walker x [set pos item aux3 posiciones set aux3 aux3 + 1]]
+    foreach [who] of walkers [x -> ask walker x [set poS item aux3 posiciones set aux3 aux3 + 1]]
   ]
-  if funcion = "Makespan" [ask turtles [set pos pos1]]
-  if funcion = "Tiempo Medio Finalizacion" [ask turtles [set pos pos2]]
+  if funcion = "Makespan" [ask turtles [set poS pos1]]
+  if funcion = "Tiempo Medio Finalizacion" [ask turtles [set poS pos2]]
 end
 
 to makespan
-  set ite (se ite final) set ite remove 0 ite ;show ite
-  if min ite = final [ask turtles [set pos1 pos]]
+  set ite (sentence ite final) set ite remove 0 ite ;https://ccl.northwestern.edu/netlogo/docs/dictionary.html#se
+  show ite ;debugging
+  if min ite = final [ask turtles [set pos1 poS]]
 end
 
 to TMFin
@@ -104,17 +109,53 @@ to TMFin
   ask turtles-on patch 3 -2 [set max3 ((max [tp] of walkers-here) / count walkers-here)]
 
   set ite2 (se ite2 precision ((max1 + max2 + max3) / 3) 3) set ite2 remove 0 ite2
-  if min ite2 = precision ((max1 + max2 + max3) / 3) 3 [ask turtles [set pos2 pos]]
+  if min ite2 = precision ((max1 + max2 + max3) / 3) 3 [ask turtles [set pos2 poS]]
+end
+
+to nueva_demanda
+  create-walkers (nP1 + nP2 + nP3 + nP4 + nP5 + nP6 + nP7 + nP8 + nP9 + nP10 + nP11 + nP12) / Lote_min [
+    set color white
+    move-to patch 1 0
+    set size 0.5 set heading 90
+    set label who
+  ]
+  diferenciacion2
+  posicion
+end
+
+to diferenciacion2
+  if nP1 > 0 [ask n-of (nP1 / Lote_min) walkers with [color = white] [set color red set tpM1 T_P1_M1 set tpM2 T_P1_M2]]
+  if nP2 > 0 [ask n-of (nP2 / Lote_min) walkers with [color = white] [set color green set tpM1 T_P2_M1 set tpM2 T_P2_M2]]
+  if nP3 > 0 [ask n-of (nP3 / Lote_min) walkers with [color = white] [set color blue set tpM1 T_P3_M1 set tpM2 T_P3_M2]]
+  if nP4 > 0 [ask n-of (nP4 / Lote_min) walkers with [color = white] [set color yellow set tpM1 T_P4_M1 set tpM2 T_P4_M2]]
+  if nP5 > 0 [ask n-of (nP5 / Lote_min) walkers with [color = white] [set color pink set tpM1 T_P5_M1 set tpM2 T_P5_M2]]
+  if nP6 > 0 [ask n-of (nP6 / Lote_min) walkers with [color = white] [set color brown set tpM1 T_P6_M1 set tpM2 T_P6_M2]]
+  if nP7 > 0 [ask n-of (nP7 / Lote_min) walkers with [color = white] [set color lime set tpM1 T_P7_M1 set tpM2 T_P7_M2]]
+  if nP8 > 0 [ask n-of (nP8 / Lote_min) walkers with [color = white] [set color cyan set tpM1 T_P8_M1 set tpM2 T_P8_M2]]
+  if nP9 > 0 [ask n-of (nP9 / Lote_min) walkers with [color = white] [set color sky set tpM1 T_P9_M1 set tpM2 T_P9_M2]]
+  if nP10 > 0 [ask n-of (nP10 / Lote_min) walkers with [color = white] [set color violet set tpM1 T_P10_M1 set tpM2 T_P10_M2]]
+  if nP11 > 0 [ask n-of (nP11 / Lote_min) walkers with [color = white] [set color magenta set tpM1 T_P11_M1 set tpM2 T_P11_M2]]
+  if nP12 > 0 [ask n-of (nP12 / Lote_min) walkers with [color = white] [set color gray set tpM1 T_P12_M1 set tpM2 T_P12_M2]]
+end
+
+to posicion2
+  if funcion = "Entrenar" [
+    let aux3 0
+    set posiciones shuffle (n-values count walkers [i -> i])
+    foreach [who] of walkers [x -> ask walker x [set poS item aux3 posiciones set aux3 aux3 + 1]]
+  ]
+  if funcion = "Makespan" [ask turtles [set poS pos1]]
+  if funcion = "Tiempo Medio Finalizacion" [ask turtles [set poS pos2]]
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
 10
 10
-447
-448
+528
+409
 -1
 -1
-13.0
+30.0
 1
 10
 1
@@ -124,10 +165,10 @@ GRAPHICS-WINDOW
 1
 1
 1
--16
-16
--16
-16
+-8
+8
+-6
+6
 0
 0
 1
@@ -135,10 +176,10 @@ ticks
 30.0
 
 INPUTBOX
-456
-11
-611
-71
+533
+12
+688
+72
 Lote_min
 100.0
 1
@@ -146,10 +187,10 @@ Lote_min
 Number
 
 BUTTON
-622
-12
-685
-45
+699
+13
+762
+46
 setup
 setup
 NIL
@@ -163,13 +204,13 @@ NIL
 1
 
 BUTTON
-695
-12
-758
-45
+772
+13
+835
+46
 go
 go
-NIL
+T
 1
 T
 OBSERVER
@@ -180,31 +221,31 @@ NIL
 1
 
 CHOOSER
-769
-14
-958
-59
+846
+15
+1035
+60
 funcion
 funcion
 "Entrenar" "Makespan" "Tiempo Medio Finalización"
-0
+2
 
 INPUTBOX
-456
-81
-506
-141
+533
+82
+583
+142
 P1
-0.0
+300.0
 1
 0
 Number
 
 SLIDER
-513
-82
-605
-115
+590
+83
+682
+116
 T_P1_M1
 T_P1_M1
 0
@@ -216,10 +257,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-612
-82
-704
-115
+689
+83
+781
+116
 T_P1_M2
 T_P1_M2
 0
@@ -231,10 +272,10 @@ NIL
 HORIZONTAL
 
 INPUTBOX
-456
-147
-506
-207
+533
+148
+583
+208
 P2
 0.0
 1
@@ -242,10 +283,10 @@ P2
 Number
 
 SLIDER
-513
-147
-605
-180
+590
+148
+682
+181
 T_P2_M1
 T_P2_M1
 0
@@ -257,10 +298,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-612
-147
-704
-180
+689
+148
+781
+181
 T_P2_M2
 T_P2_M2
 0
@@ -272,10 +313,10 @@ NIL
 HORIZONTAL
 
 INPUTBOX
-456
-216
-506
-276
+533
+217
+583
+277
 P3
 0.0
 1
@@ -283,21 +324,21 @@ P3
 Number
 
 INPUTBOX
-456
-285
-506
-345
+533
+286
+583
+346
 P4
-0.0
+100.0
 1
 0
 Number
 
 INPUTBOX
-456
-351
-506
-411
+533
+352
+583
+412
 P5
 0.0
 1
@@ -305,10 +346,10 @@ P5
 Number
 
 INPUTBOX
-456
-417
-506
-477
+533
+418
+583
+478
 P6
 0.0
 1
@@ -316,10 +357,10 @@ P6
 Number
 
 INPUTBOX
-715
-82
-765
-142
+792
+83
+842
+143
 P7
 0.0
 1
@@ -327,10 +368,10 @@ P7
 Number
 
 INPUTBOX
-715
-147
-765
-207
+792
+148
+842
+208
 P8
 0.0
 1
@@ -338,10 +379,10 @@ P8
 Number
 
 INPUTBOX
-715
-215
-765
-275
+792
+216
+842
+276
 P9
 0.0
 1
@@ -349,21 +390,21 @@ P9
 Number
 
 INPUTBOX
-715
-285
-765
-345
+792
+286
+842
+346
 P10
-0.0
+700.0
 1
 0
 Number
 
 INPUTBOX
-714
-352
-764
-412
+791
+353
+841
+413
 P11
 0.0
 1
@@ -371,10 +412,10 @@ P11
 Number
 
 INPUTBOX
-714
-419
-764
-479
+791
+420
+841
+480
 P12
 0.0
 1
@@ -382,10 +423,10 @@ P12
 Number
 
 SLIDER
-512
-217
-604
-250
+589
+218
+681
+251
 T_P3_M1
 T_P3_M1
 0
@@ -397,10 +438,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-612
-217
-704
-250
+689
+218
+781
+251
 T_P3_M2
 T_P3_M2
 0
@@ -412,10 +453,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-512
-287
-604
-320
+589
+288
+681
+321
 T_P4_M1
 T_P4_M1
 0
@@ -427,10 +468,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-611
-287
-703
-320
+688
+288
+780
+321
 T_P4_M2
 T_P4_M2
 0
@@ -442,10 +483,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-511
-352
-603
-385
+588
+353
+680
+386
 T_P5_M1
 T_P5_M1
 0
@@ -457,10 +498,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-609
-352
-701
-385
+686
+353
+778
+386
 T_P5_M2
 T_P5_M2
 0
@@ -472,205 +513,205 @@ NIL
 HORIZONTAL
 
 SLIDER
-510
-417
-602
-450
-T_P6_M1
-T_P6_M1
-0
-10
-10.0
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-608
-417
-700
-450
-T_P6_M2
-T_P6_M2
-0
-10
-10.0
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-772
-82
-864
-115
-T_P7_M1
-T_P7_M1
-0
-10
-10.0
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-871
-82
-963
-115
-T_P7_M2
-T_P7_M2
-0
-10
-10.0
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-771
-147
-863
-180
-T_P8_M1
-T_P8_M1
-0
-10
-10.0
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-870
-147
-962
-180
-T_P8_M2
-T_P8_M2
-0
-10
-10.0
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-771
-215
-863
-248
-T_P9_M1
-T_P9_M1
-0
-10
-10.0
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-869
-215
-961
-248
-T_P9_M2
-T_P9_M2
-0
-10
-10.0
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-771
-285
-863
-318
-T_P10_M1
-T_P10_M1
-0
-10
-10.0
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-868
-285
-960
-318
-T_P10_M2
-T_P10_M2
-0
-10
-10.0
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-770
-352
-862
-385
-T_P11_M1
-T_P11_M1
-0
-10
-10.0
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-868
-352
-960
-385
-T_P11_M2
-T_P11_M2
-0
-10
-10.0
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-770
-419
-862
-452
-T_P12_M1
-T_P12_M1
-0
-10
-10.0
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-869
+587
 418
-961
+679
 451
+T_P6_M1
+T_P6_M1
+0
+10
+10.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+685
+418
+777
+451
+T_P6_M2
+T_P6_M2
+0
+10
+10.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+849
+83
+941
+116
+T_P7_M1
+T_P7_M1
+0
+10
+10.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+948
+83
+1040
+116
+T_P7_M2
+T_P7_M2
+0
+10
+10.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+848
+148
+940
+181
+T_P8_M1
+T_P8_M1
+0
+10
+10.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+947
+148
+1039
+181
+T_P8_M2
+T_P8_M2
+0
+10
+10.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+848
+216
+940
+249
+T_P9_M1
+T_P9_M1
+0
+10
+10.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+946
+216
+1038
+249
+T_P9_M2
+T_P9_M2
+0
+10
+10.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+848
+286
+940
+319
+T_P10_M1
+T_P10_M1
+0
+10
+10.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+945
+286
+1037
+319
+T_P10_M2
+T_P10_M2
+0
+10
+10.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+847
+353
+939
+386
+T_P11_M1
+T_P11_M1
+0
+10
+10.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+945
+353
+1037
+386
+T_P11_M2
+T_P11_M2
+0
+10
+10.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+847
+420
+939
+453
+T_P12_M1
+T_P12_M1
+0
+10
+10.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+946
+419
+1038
+452
 T_P12_M2
 T_P12_M2
 0
@@ -682,10 +723,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-994
-14
-1166
-47
+1071
+15
+1243
+48
 Tasa_M1
 Tasa_M1
 0
@@ -697,10 +738,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-994
-81
-1166
-114
+1072
+83
+1244
+116
 Tasa_M2
 Tasa_M2
 0
@@ -712,10 +753,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-994
-147
-1166
-180
+1071
+148
+1243
+181
 Tasa_M3
 Tasa_M3
 0
@@ -727,10 +768,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-993
-215
-1165
-248
+1070
+216
+1242
+249
 Tasa_M4
 Tasa_M4
 0
@@ -740,6 +781,155 @@ Tasa_M4
 1
 NIL
 HORIZONTAL
+
+BUTTON
+1358
+17
+1482
+50
+NIL
+nueva_demanda
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+INPUTBOX
+1303
+73
+1357
+133
+nP1
+0.0
+1
+0
+Number
+
+INPUTBOX
+1305
+146
+1355
+206
+nP2
+0.0
+1
+0
+Number
+
+INPUTBOX
+1304
+218
+1354
+278
+nP3
+200.0
+1
+0
+Number
+
+INPUTBOX
+1305
+286
+1355
+346
+nP4
+1000.0
+1
+0
+Number
+
+INPUTBOX
+1307
+361
+1357
+421
+nP5
+0.0
+1
+0
+Number
+
+INPUTBOX
+1309
+434
+1359
+494
+nP6
+0.0
+1
+0
+Number
+
+INPUTBOX
+1399
+76
+1449
+136
+nP7
+0.0
+1
+0
+Number
+
+INPUTBOX
+1404
+154
+1454
+214
+nP8
+0.0
+1
+0
+Number
+
+INPUTBOX
+1401
+225
+1451
+285
+nP9
+100.0
+1
+0
+Number
+
+INPUTBOX
+1400
+291
+1450
+351
+nP10
+0.0
+1
+0
+Number
+
+INPUTBOX
+1400
+366
+1450
+426
+nP11
+0.0
+1
+0
+Number
+
+INPUTBOX
+1401
+436
+1451
+496
+nP12
+0.0
+1
+0
+Number
 
 @#$#@#$#@
 ## WHAT IS IT?
