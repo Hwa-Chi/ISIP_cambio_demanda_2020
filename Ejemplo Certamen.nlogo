@@ -636,7 +636,7 @@ INPUTBOX
 1357
 421
 nP5
-0.0
+100.0
 1
 0
 Number
