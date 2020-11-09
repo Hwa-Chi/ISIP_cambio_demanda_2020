@@ -11,6 +11,7 @@ walkers-own [tpM1 tpM2 poS tp tpp pos1 pos2 tmp_entrega
 ;
 ;
 
+
 patches-own [tpp1 tpp2 costo-tmp_entrega costo_procesamiento costo_entrega ultima-subasta num_ofertas_ronda tasa-exito-subasta descuento]
 globals [tiempo posiciones final ite ite2 max1 max2 max3 tp_max_M1]
 
