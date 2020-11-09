@@ -1,17 +1,15 @@
 breed [walkers walker]
 ;TODO definiciones de atributos
 
-walkers-own [tpM1 tpM2 poS tp tpp pos1 pos2 tmp_entrega
-  presupuesto-entrega presupuesto-M1 presupuesto-M2
-  oferta_entrega oferta_M1 oferta-M2
-  riesgo_entrega riesgo_procesamiento_M1 riesgo_procesamiento_M2
+walkers-own [tpM1 tpM2 poS tp tpp pos1 pos2
+  presupuesto-M1 presupuesto-M2
+  oferta_M1 oferta-M2
+  riesgo_procesamiento_M1 riesgo_procesamiento_M2
   oferta_total]
-;riesgo es rho
-;
-;
-;
 
-patches-own [tpp1 tpp2 costo-tmp_entrega costo_procesamiento costo_entrega ultima-subasta num_ofertas_ronda tasa-exito-subasta descuento]
+
+patches-own [tpp1 tpp2 costo_procesamiento ultima-subasta num_ofertas_ronda tasa-exito-subasta descuento]
+
 globals [tiempo posiciones final ite ite2 max1 max2 max3 tp_max_M1]
 
 
@@ -45,18 +43,18 @@ to nodos
 end
 
 to diferenciacion
-  if P1 > 0 [ask n-of (P1 / Lote_min) walkers with [color = white] [set color red set tpM1 T_P1_M1 set tpM2 T_P1_M2 set tmp_entrega Entrega_P1 ]]
-  if P2 > 0 [ask n-of (P2 / Lote_min) walkers with [color = white] [set color green set tpM1 T_P2_M1 set tpM2 T_P2_M2 set tmp_entrega Entrega_P2 ]]
-  if P3 > 0 [ask n-of (P3 / Lote_min) walkers with [color = white] [set color blue set tpM1 T_P3_M1 set tpM2 T_P3_M2 set tmp_entrega Entrega_P3 ]]
-  if P4 > 0 [ask n-of (P4 / Lote_min) walkers with [color = white] [set color yellow set tpM1 T_P4_M1 set tpM2 T_P4_M2 set tmp_entrega Entrega_P4]]
-  if P5 > 0 [ask n-of (P5 / Lote_min) walkers with [color = white] [set color pink set tpM1 T_P5_M1 set tpM2 T_P5_M2 set tmp_entrega Entrega_P5]]
-  if P6 > 0 [ask n-of (P6 / Lote_min) walkers with [color = white] [set color brown set tpM1 T_P6_M1 set tpM2 T_P6_M2 set tmp_entrega Entrega_P6]]
+  if P1 > 0 [ask n-of (P1 / Lote_min) walkers with [color = white] [set color red set tpM1 T_P1_M1 set tpM2 T_P1_M2  ]]
+  if P2 > 0 [ask n-of (P2 / Lote_min) walkers with [color = white] [set color green set tpM1 T_P2_M1 set tpM2 T_P2_M2  ]]
+  if P3 > 0 [ask n-of (P3 / Lote_min) walkers with [color = white] [set color blue set tpM1 T_P3_M1 set tpM2 T_P3_M2 ]]
+  if P4 > 0 [ask n-of (P4 / Lote_min) walkers with [color = white] [set color yellow set tpM1 T_P4_M1 set tpM2 T_P4_M2 ]]
+  if P5 > 0 [ask n-of (P5 / Lote_min) walkers with [color = white] [set color pink set tpM1 T_P5_M1 set tpM2 T_P5_M2 ]]
+  if P6 > 0 [ask n-of (P6 / Lote_min) walkers with [color = white] [set color brown set tpM1 T_P6_M1 set tpM2 T_P6_M2 ]]
   ask walkers [set riesgo_procesamiento_M1 (1 + (tpM1 / 10))
                 set riesgo_procesamiento_M2 (1 + (tpM1 / 10))] ; 10 es el máximo tiempo de procesamiento en una máquina
 end
 
 to fijar-presupuesto-inicial
-  ask walkers [set presupuesto-entrega (Base-presupuesto-entrega / tmp_entrega)
+  ask walkers [
               set presupuesto-M1 (Base-presupuesto-procesamiento * tpM1 )
               set presupuesto-M2 (Base-presupuesto-procesamiento * tpM2 )
               set oferta-M2 0]
@@ -155,6 +153,9 @@ end
 ;____________________________________________________________________________________________________________________
 to subastar-uso-M1
 
+  let ofertantes walkers-on patches with [plabel = "cola-M1"]
+  let costo_M1 one-of [costo_procesamiento] of patches with [plabel = "M1"]
+
   ask patches with [plabel = "M1"] [set num_ofertas_ronda 0
                                     set costo_procesamiento Max-costo-proc * .8 * (count turtles-here) + .2 * Max-costo-proc ; la cantidad de tortugas en la máquina se toma como la utilización, debería ser 0 o 1
                                     set descuento (Max-desc-subasta * (1 - tasa-exito-subasta ) )
@@ -162,18 +163,11 @@ to subastar-uso-M1
 
                                     ]
 
-  ask walkers-on patches with [plabel = "cola-M1"]  [set oferta_entrega (.9 * (presupuesto-entrega / 2))
-                                                    set riesgo_entrega (1 + (tiempo / tmp_entrega))
-                                                    set oferta_M1 (.9 * (presupuesto-M1 / 2)) ]
-
-while [
-
-      ;mientras no haya un agente que ofrezca más que el costo de entrega Y de procesamiento
-
-  not any? walkers-on patches with [plabel = "cola-M1"] with [
-
-      oferta_entrega < [costo_procesamiento] of patches with [plabel = "M1"]
-      and oferta_M1 < [costo_procesamiento] of patches with [plabel = "M1"]
+  ask ofertantes  [
+                   set oferta_M1 (.9 * (presupuesto-M1 / 2))
+                                                    ]
+;mientras no haya un agente que ofrezca más de procesamiento
+while [ not any? ofertantes with [
   ]
 
         ]
@@ -187,21 +181,20 @@ while [
 
 ;TODO subastas
     ask walkers-on patches with [plabel = "cola-M1"] [
-        set oferta_entrega ( riesgo_entrega * oferta_entrega)
+
         set oferta_M1 (riesgo_procesamiento_M1 * oferta_M1)
     ]
      ]
 
 ;
 
-  let mejores_postores walkers-on patches with [plabel = "cola-M1"] with [oferta_entrega < [costo_procesamiento] of patches with [plabel = "M1"]
-    and oferta_M1 < [costo_procesamiento] of patches with [plabel = "M1"] ]
+  let mejores_postores walkers-on patch 0 0 with [oferta_M1 < one-of [costo_procesamiento] of patches with [plabel = "M1"] ]
 
  ask mejores_postores [
-      set oferta_total oferta_entrega + oferta_M1
+      set oferta_total  oferta_M1
     ]
 
-  ask max-one-of mejores_postores [oferta_total] [move-to patches with [plabel = "M1"] ]
+  ask max-one-of mejores_postores [oferta_total] [move-to patch 1 0 ]
 
 
 
@@ -242,12 +235,12 @@ to nueva_demanda
 end
 
 to diferenciacion2
-  if nP1 > 0 [ask n-of (nP1 / Lote_min) walkers with [color = white] [set color red set tpM1 T_P1_M1 set tpM2 T_P1_M2  set tmp_entrega Entrega_P1 + tiempo ]]
-  if nP2 > 0 [ask n-of (nP2 / Lote_min) walkers with [color = white] [set color green set tpM1 T_P2_M1 set tpM2 T_P2_M2  set tmp_entrega Entrega_P2 + tiempo  ]]
-  if nP3 > 0 [ask n-of (nP3 / Lote_min) walkers with [color = white] [set color blue set tpM1 T_P3_M1 set tpM2 T_P3_M2 set tmp_entrega Entrega_P3 + tiempo  ]]
-  if nP4 > 0 [ask n-of (nP4 / Lote_min) walkers with [color = white] [set color yellow set tpM1 T_P4_M1 set tpM2 T_P4_M2 set tmp_entrega Entrega_P4 + tiempo  ]]
-  if nP5 > 0 [ask n-of (nP5 / Lote_min) walkers with [color = white] [set color pink set tpM1 T_P5_M1 set tpM2 T_P5_M2 set tmp_entrega Entrega_P5 + tiempo  ]]
-  if nP6 > 0 [ask n-of (nP6 / Lote_min) walkers with [color = white] [set color brown set tpM1 T_P6_M1 set tpM2 T_P6_M2 set tmp_entrega Entrega_P6 + tiempo  ]]
+  if nP1 > 0 [ask n-of (nP1 / Lote_min) walkers with [color = white] [set color red set tpM1 T_P1_M1 set tpM2 T_P1_M2  ]]
+  if nP2 > 0 [ask n-of (nP2 / Lote_min) walkers with [color = white] [set color green set tpM1 T_P2_M1 set tpM2 T_P2_M2  ]]
+  if nP3 > 0 [ask n-of (nP3 / Lote_min) walkers with [color = white] [set color blue set tpM1 T_P3_M1 set tpM2 T_P3_M2 ]]
+  if nP4 > 0 [ask n-of (nP4 / Lote_min) walkers with [color = white] [set color yellow set tpM1 T_P4_M1 set tpM2 T_P4_M2 ]]
+  if nP5 > 0 [ask n-of (nP5 / Lote_min) walkers with [color = white] [set color pink set tpM1 T_P5_M1 set tpM2 T_P5_M2   ]]
+  if nP6 > 0 [ask n-of (nP6 / Lote_min) walkers with [color = white] [set color brown set tpM1 T_P6_M1 set tpM2 T_P6_M2   ]]
 
 end
 
