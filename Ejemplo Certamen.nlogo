@@ -16,8 +16,8 @@ globals [makespan]
 
 to setup
   ca
-  nodos
-  create-lotes (P1 + P2 + P3 + P4 + P5 + P6) / Lote_min [
+  crear_layout
+  create-lotes P1 + P2 + P3 + P4 + P5 + P6 [
     set color white
     move-to patch 0 0 ;funcionará como cola para M1
     set size 0.5 set heading 90
@@ -31,7 +31,7 @@ to setup
 
 end
 
-to nodos
+to crear_layout
   ask patch 0 0 [set pcolor white set plabel "cola-M1" set plabel-color black]
   ask patch 1 0 [ set plabel "M1" set plabel-color white set tpp1 1 set tpp2 2 set pcolor green]
   ask patch 2 0 [set pcolor grey set plabel "cola-M2" set plabel-color black]
@@ -45,12 +45,12 @@ end
 
 
 to diferenciacion
-  if P1 > 0 [ask n-of (P1 / Lote_min) lotes with [color = white] [set color red set tpM1 T_P1_M1 set tpM2 T_P1_M2  ]]
-  if P2 > 0 [ask n-of (P2 / Lote_min) lotes with [color = white] [set color cyan set tpM1 T_P2_M1 set tpM2 T_P2_M2  ]]
-  if P3 > 0 [ask n-of (P3 / Lote_min) lotes with [color = white] [set color blue set tpM1 T_P3_M1 set tpM2 T_P3_M2 ]]
-  if P4 > 0 [ask n-of (P4 / Lote_min) lotes with [color = white] [set color yellow set tpM1 T_P4_M1 set tpM2 T_P4_M2 ]]
-  if P5 > 0 [ask n-of (P5 / Lote_min) lotes with [color = white] [set color pink set tpM1 T_P5_M1 set tpM2 T_P5_M2 ]]
-  if P6 > 0 [ask n-of (P6 / Lote_min) lotes with [color = white] [set color brown set tpM1 T_P6_M1 set tpM2 T_P6_M2 ]]
+  if P1 > 0 [ask n-of P1 lotes with [color = white] [set color red set tpM1 T_P1_M1 set tpM2 T_P1_M2  ]]
+  if P2 > 0 [ask n-of P2  lotes with [color = white] [set color cyan set tpM1 T_P2_M1 set tpM2 T_P2_M2  ]]
+  if P3 > 0 [ask n-of P3 lotes with [color = white] [set color blue set tpM1 T_P3_M1 set tpM2 T_P3_M2 ]]
+  if P4 > 0 [ask n-of P4  lotes with [color = white] [set color yellow set tpM1 T_P4_M1 set tpM2 T_P4_M2 ]]
+  if P5 > 0 [ask n-of P5  lotes with [color = white] [set color pink set tpM1 T_P5_M1 set tpM2 T_P5_M2 ]]
+  if P6 > 0 [ask n-of P6  lotes with [color = white] [set color brown set tpM1 T_P6_M1 set tpM2 T_P6_M2 ]]
   ask lotes [set riesgo_procesamiento_M1 (1 + (tpM1 / 10))
                 set riesgo_procesamiento_M2 (1 + (tpM2 / 10))] ; 10 es el máximo tiempo de procesamiento en una máquina
 end
@@ -381,7 +381,7 @@ end
 ;end
 
 to nueva_demanda
-  create-lotes (nP1 + nP2 + nP3 + nP4 + nP5 + nP6) / Lote_min [
+  create-lotes nP1 + nP2 + nP3 + nP4 + nP5 + nP6 [
     set color white
     move-to patch 0 0
     set size 0.5 set heading 90
@@ -392,12 +392,12 @@ to nueva_demanda
 end
 
 to diferenciacion2
-  if nP1 > 0 [ask n-of (nP1 / Lote_min) lotes with [color = white] [set color red set tpM1 T_P1_M1 set tpM2 T_P1_M2  ]]
-  if nP2 > 0 [ask n-of (nP2 / Lote_min) lotes with [color = white] [set color green set tpM1 T_P2_M1 set tpM2 T_P2_M2  ]]
-  if nP3 > 0 [ask n-of (nP3 / Lote_min) lotes with [color = white] [set color blue set tpM1 T_P3_M1 set tpM2 T_P3_M2 ]]
-  if nP4 > 0 [ask n-of (nP4 / Lote_min) lotes with [color = white] [set color yellow set tpM1 T_P4_M1 set tpM2 T_P4_M2 ]]
-  if nP5 > 0 [ask n-of (nP5 / Lote_min) lotes with [color = white] [set color pink set tpM1 T_P5_M1 set tpM2 T_P5_M2   ]]
-  if nP6 > 0 [ask n-of (nP6 / Lote_min) lotes with [color = white] [set color brown set tpM1 T_P6_M1 set tpM2 T_P6_M2   ]]
+  if nP1 > 0 [ask n-of nP1 lotes with [color = white] [set color red set tpM1 T_P1_M1 set tpM2 T_P1_M2  ]]
+  if nP2 > 0 [ask n-of nP2 lotes with [color = white] [set color green set tpM1 T_P2_M1 set tpM2 T_P2_M2  ]]
+  if nP3 > 0 [ask n-of nP3 lotes with [color = white] [set color blue set tpM1 T_P3_M1 set tpM2 T_P3_M2 ]]
+  if nP4 > 0 [ask n-of nP4 lotes with [color = white] [set color yellow set tpM1 T_P4_M1 set tpM2 T_P4_M2 ]]
+  if nP5 > 0 [ask n-of nP5 lotes with [color = white] [set color pink set tpM1 T_P5_M1 set tpM2 T_P5_M2   ]]
+  if nP6 > 0 [ask n-of nP6 lotes with [color = white] [set color brown set tpM1 T_P6_M1 set tpM2 T_P6_M2   ]]
 
 end
 
@@ -412,10 +412,10 @@ to fijar_presupuesto_nuevos_lotes
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-10
-10
-365
-504
+151
+16
+506
+510
 -1
 -1
 69.43
@@ -437,17 +437,6 @@ GRAPHICS-WINDOW
 1
 ticks
 30.0
-
-INPUTBOX
-533
-12
-688
-72
-Lote_min
-100.0
-1
-0
-Number
 
 BUTTON
 699
@@ -499,7 +488,7 @@ INPUTBOX
 583
 142
 P1
-1000.0
+101.0
 1
 0
 Number
@@ -540,7 +529,7 @@ INPUTBOX
 581
 220
 P2
-2000.0
+0.0
 1
 0
 Number
@@ -581,7 +570,7 @@ INPUTBOX
 581
 289
 P3
-4000.0
+0.0
 1
 0
 Number
@@ -592,7 +581,7 @@ INPUTBOX
 581
 358
 P4
-6000.0
+0.0
 1
 0
 Number
@@ -628,7 +617,7 @@ T_P3_M1
 T_P3_M1
 1
 10
-10.0
+8.0
 1
 1
 NIL
@@ -673,7 +662,7 @@ T_P4_M2
 T_P4_M2
 3
 100
-68.0
+40.0
 1
 1
 NIL
@@ -703,7 +692,7 @@ T_P5_M2
 T_P5_M2
 3
 100
-46.0
+50.0
 1
 1
 NIL
@@ -844,7 +833,7 @@ INPUTBOX
 1354
 278
 nP3
-200.0
+20.0
 1
 0
 Number
@@ -855,7 +844,7 @@ INPUTBOX
 1355
 346
 nP4
-1000.0
+10.0
 1
 0
 Number
@@ -866,7 +855,7 @@ INPUTBOX
 1357
 421
 nP5
-100.0
+10.0
 1
 0
 Number
@@ -888,7 +877,7 @@ INPUTBOX
 1357
 71
 Llegada_pedido
-500.0
+30.0
 1
 0
 Number
