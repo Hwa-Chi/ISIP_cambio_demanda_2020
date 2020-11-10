@@ -1,23 +1,21 @@
 breed [lotes lote]
-;TODO definiciones de atributos
 
-lotes-own [tpM1 tpM2 poS tiempo_proceso_total tiempo_proceso_actual pos1 pos2
+lotes-own [tpM1 tpM2 tiempo_proceso_total tiempo_proceso_actual
   presupuesto-M1 presupuesto-M2
   oferta_M1 oferta_M2
   riesgo_procesamiento_M1 riesgo_procesamiento_M2]
 
 
-patches-own [tpp1 tpp2 costo_procesamiento ultima-subasta num_ofertas_ronda tasa-exito-subasta descuento]
+patches-own [ costo_procesamiento ultima-subasta num_ofertas_ronda tasa-exito-subasta descuento]
 
-;globals [tiempo posiciones final ite ite2 max1 max2 max3 tp_max_M1]
 globals [makespan]
 
 ;==========================================Procedimientos para el setup====================================================
 
 to setup
   ca
-  nodos
-  create-lotes (P1 + P2 + P3 + P4 + P5 + P6) / Lote_min [
+  crear_layout
+  create-lotes P1 + P2 + P3 + P4 + P5 + P6 [
     set color white
     move-to patch 0 0 ;funcionará como cola para M1
     set size 0.5 set heading 90
@@ -26,18 +24,18 @@ to setup
   ]
   diferenciacion
   fijar-presupuesto-inicial
-  ;posicion
+
   reset-ticks
 
 end
 
-to nodos
+to crear_layout
   ask patch 0 0 [set pcolor white set plabel "cola-M1" set plabel-color black]
-  ask patch 1 0 [ set plabel "M1" set plabel-color white set tpp1 1 set tpp2 2 set pcolor green]
+  ask patch 1 0 [ set plabel "M1" set plabel-color white  set pcolor green]
   ask patch 2 0 [set pcolor grey set plabel "cola-M2" set plabel-color black]
-  ask patch 3 2 [set plabel "M2" set plabel-color white set tpp1 3 set tpp2 8 set pcolor green]
-  ask patch 3 -2 [set plabel "M4" set plabel-color white set tpp1 3 set tpp2 8 set pcolor green]
-  ask patch 3 0 [set plabel "M3" set plabel-color white set tpp1 3 set tpp2 8 set pcolor green]
+  ask patch 3 2 [set plabel "M2" set plabel-color white set pcolor green]
+  ask patch 3 -2 [set plabel "M4" set plabel-color white set pcolor green]
+  ask patch 3 0 [set plabel "M3" set plabel-color white set pcolor green]
    ask patch 4 0 [set pcolor grey set plabel "PT" set plabel-color black]
 
   ask patches [set ultima-subasta 0 set num_ofertas_ronda 0 set tasa-exito-subasta 0]
@@ -45,12 +43,12 @@ end
 
 
 to diferenciacion
-  if P1 > 0 [ask n-of (P1 / Lote_min) lotes with [color = white] [set color red set tpM1 T_P1_M1 set tpM2 T_P1_M2  ]]
-  if P2 > 0 [ask n-of (P2 / Lote_min) lotes with [color = white] [set color cyan set tpM1 T_P2_M1 set tpM2 T_P2_M2  ]]
-  if P3 > 0 [ask n-of (P3 / Lote_min) lotes with [color = white] [set color blue set tpM1 T_P3_M1 set tpM2 T_P3_M2 ]]
-  if P4 > 0 [ask n-of (P4 / Lote_min) lotes with [color = white] [set color yellow set tpM1 T_P4_M1 set tpM2 T_P4_M2 ]]
-  if P5 > 0 [ask n-of (P5 / Lote_min) lotes with [color = white] [set color pink set tpM1 T_P5_M1 set tpM2 T_P5_M2 ]]
-  if P6 > 0 [ask n-of (P6 / Lote_min) lotes with [color = white] [set color brown set tpM1 T_P6_M1 set tpM2 T_P6_M2 ]]
+  if P1 > 0 [ask n-of P1 lotes with [color = white] [set color red set tpM1 T_P1_M1 set tpM2 T_P1_M2  ]]
+  if P2 > 0 [ask n-of P2  lotes with [color = white] [set color cyan set tpM1 T_P2_M1 set tpM2 T_P2_M2  ]]
+  if P3 > 0 [ask n-of P3 lotes with [color = white] [set color blue set tpM1 T_P3_M1 set tpM2 T_P3_M2 ]]
+  if P4 > 0 [ask n-of P4  lotes with [color = white] [set color yellow set tpM1 T_P4_M1 set tpM2 T_P4_M2 ]]
+  if P5 > 0 [ask n-of P5  lotes with [color = white] [set color pink set tpM1 T_P5_M1 set tpM2 T_P5_M2 ]]
+  if P6 > 0 [ask n-of P6  lotes with [color = white] [set color brown set tpM1 T_P6_M1 set tpM2 T_P6_M2 ]]
   ask lotes [set riesgo_procesamiento_M1 (1 + (tpM1 / 10))
                 set riesgo_procesamiento_M2 (1 + (tpM2 / 10))] ; 10 es el máximo tiempo de procesamiento en una máquina
 end
@@ -62,22 +60,6 @@ to fijar-presupuesto-inicial
               set oferta_M2 0]
 end
 
-;to posicion ;???
-;
-;  if funcion = "Negociacion"[
-;
-;  ]
-;
-;  if funcion = "Entrenar" [
-;    let aux3 0
-;    set posiciones shuffle (n-values count lotes [i -> i])
-;    foreach [who] of lotes [x -> ask lote x [set poS item aux3 posiciones set aux3 aux3 + 1]]
-;  ]
-;
-;
-;  if funcion = "Makespan" [ask turtles [set poS pos1]]
-;  if funcion = "Tiempo Medio Finalizacion" [ask turtles [set poS pos2]]
-;end
 
 
 ;==========================================Procedimientos para la Ejecución====================================================
@@ -86,6 +68,8 @@ end
 to go
 
   ifelse count turtles != count turtles-on patch 4 0 [
+
+    if ticks = Llegada_pedido [nueva_demanda]
 
   ask lotes-on patch 0 0 [    if not any? lotes-on patches with [plabel = "M1"]
     [subastar-uso-M1]  ]
@@ -142,7 +126,7 @@ ask turtles-on patches with [plabel = "M3"]
     tick
     ]
 
-    ;resultados
+
     [show "fin"
     set makespan max [tiempo_proceso_total] of lotes
 
@@ -153,14 +137,6 @@ end
 
 
 
-;
-;  [
-;    ;show max [tiempo_proceso_total] of lotes
-;    set final max [tiempo_proceso_total] of lotes
-;    makespan
-;    TMFin
-;    ask turtles [move-to patch 1 0 set tiempo_proceso_total 0 set tiempo_proceso_actual 0 set tiempo 0] posicion ;show poS
-;  ]
 
 
 to ir_Centro2 ; primero revisa si las máquinas tipo 2 están vacías, si están ocupadas pasa a la cola para subastar
@@ -211,7 +187,6 @@ to subastar-uso-M1
 ask ofertantes  [set oferta_M1 (.9 * (presupuesto-M1 / 2))]
 
 ;mientras no haya un agente que ofrezca más de procesamiento
-
 
     ifelse not any? ofertantes with [oferta_M1 >= [costo_procesamiento] of patch 0 0]
 
@@ -362,26 +337,8 @@ ifelse not any? ofertantes with [oferta_M2 >= one-of [costo_procesamiento] of pa
 end
 
 
-
-
-
-;to to-makespan ;???
-;  set ite (sentence ite final) set ite remove 0 ite ;https://ccl.northwestern.edu/netlogo/docs/dictionary.html#se
-;  show ite ;debugging
-;  if min ite = final [ask turtles [set pos1 poS]]
-;end
-;
-;to TMFin ;???
-;  ask turtles-on patch 3 2 [set max1 ((max [tiempo_proceso_total] of lotes-here) / count lotes-here)]
-;  ask turtles-on patch 3 0 [set max2 ((max [tiempo_proceso_total] of lotes-here) / count lotes-here)]
-;  ask turtles-on patch 3 -2 [set max3 ((max [tiempo_proceso_total] of lotes-here) / count lotes-here)]
-;
-;  set ite2 (se ite2 precision ((max1 + max2 + max3) / 3) 3) set ite2 remove 0 ite2
-;  if min ite2 = precision ((max1 + max2 + max3) / 3) 3 [ask turtles [set pos2 poS]]
-;end
-
 to nueva_demanda
-  create-lotes (nP1 + nP2 + nP3 + nP4 + nP5 + nP6) / Lote_min [
+  create-lotes nP1 + nP2 + nP3 + nP4 + nP5 + nP6 [
     set color white
     move-to patch 0 0
     set size 0.5 set heading 90
@@ -392,12 +349,12 @@ to nueva_demanda
 end
 
 to diferenciacion2
-  if nP1 > 0 [ask n-of (nP1 / Lote_min) lotes with [color = white] [set color red set tpM1 T_P1_M1 set tpM2 T_P1_M2  ]]
-  if nP2 > 0 [ask n-of (nP2 / Lote_min) lotes with [color = white] [set color green set tpM1 T_P2_M1 set tpM2 T_P2_M2  ]]
-  if nP3 > 0 [ask n-of (nP3 / Lote_min) lotes with [color = white] [set color blue set tpM1 T_P3_M1 set tpM2 T_P3_M2 ]]
-  if nP4 > 0 [ask n-of (nP4 / Lote_min) lotes with [color = white] [set color yellow set tpM1 T_P4_M1 set tpM2 T_P4_M2 ]]
-  if nP5 > 0 [ask n-of (nP5 / Lote_min) lotes with [color = white] [set color pink set tpM1 T_P5_M1 set tpM2 T_P5_M2   ]]
-  if nP6 > 0 [ask n-of (nP6 / Lote_min) lotes with [color = white] [set color brown set tpM1 T_P6_M1 set tpM2 T_P6_M2   ]]
+  if nP1 > 0 [ask n-of nP1 lotes with [color = white] [set color red set tpM1 T_P1_M1 set tpM2 T_P1_M2  ]]
+  if nP2 > 0 [ask n-of nP2 lotes with [color = white] [set color green set tpM1 T_P2_M1 set tpM2 T_P2_M2  ]]
+  if nP3 > 0 [ask n-of nP3 lotes with [color = white] [set color blue set tpM1 T_P3_M1 set tpM2 T_P3_M2 ]]
+  if nP4 > 0 [ask n-of nP4 lotes with [color = white] [set color yellow set tpM1 T_P4_M1 set tpM2 T_P4_M2 ]]
+  if nP5 > 0 [ask n-of nP5 lotes with [color = white] [set color pink set tpM1 T_P5_M1 set tpM2 T_P5_M2   ]]
+  if nP6 > 0 [ask n-of nP6 lotes with [color = white] [set color brown set tpM1 T_P6_M1 set tpM2 T_P6_M2   ]]
 
 end
 
@@ -412,10 +369,10 @@ to fijar_presupuesto_nuevos_lotes
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-10
-10
-365
-504
+151
+16
+506
+511
 -1
 -1
 69.43
@@ -438,22 +395,11 @@ GRAPHICS-WINDOW
 ticks
 30.0
 
-INPUTBOX
-533
-12
-688
-72
-Lote_min
-100.0
-1
-0
-Number
-
 BUTTON
-699
-13
-762
-46
+624
+15
+687
+48
 setup
 setup
 NIL
@@ -483,23 +429,13 @@ NIL
 NIL
 1
 
-CHOOSER
-846
-15
-1035
-60
-funcion
-funcion
-"Entrenar" "Makespan" "Tiempo Medio Finalización" "Negociacion"
-0
-
 INPUTBOX
 533
 82
 583
 142
 P1
-1000.0
+101.0
 1
 0
 Number
@@ -540,7 +476,7 @@ INPUTBOX
 581
 220
 P2
-2000.0
+0.0
 1
 0
 Number
@@ -581,7 +517,7 @@ INPUTBOX
 581
 289
 P3
-4000.0
+0.0
 1
 0
 Number
@@ -592,7 +528,7 @@ INPUTBOX
 581
 358
 P4
-6000.0
+0.0
 1
 0
 Number
@@ -628,7 +564,7 @@ T_P3_M1
 T_P3_M1
 1
 10
-10.0
+8.0
 1
 1
 NIL
@@ -673,7 +609,7 @@ T_P4_M2
 T_P4_M2
 3
 100
-68.0
+37.0
 1
 1
 NIL
@@ -703,7 +639,7 @@ T_P5_M2
 T_P5_M2
 3
 100
-46.0
+50.0
 1
 1
 NIL
@@ -740,10 +676,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-1071
-15
-1243
-48
+981
+28
+1153
+61
 Tasa_M1
 Tasa_M1
 0
@@ -755,10 +691,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-1072
-83
-1244
-116
+982
+96
+1154
+129
 Tasa_M2
 Tasa_M2
 0
@@ -770,10 +706,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-1071
-148
-1243
-181
+981
+161
+1153
+194
 Tasa_M3
 Tasa_M3
 0
@@ -785,10 +721,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-1070
-216
-1242
-249
+980
+229
+1152
+262
 Tasa_M4
 Tasa_M4
 0
@@ -800,10 +736,10 @@ NIL
 HORIZONTAL
 
 BUTTON
-1374
-15
-1498
-48
+616
+62
+740
+95
 NIL
 nueva_demanda
 NIL
@@ -817,10 +753,10 @@ NIL
 1
 
 INPUTBOX
-1303
-73
-1357
-133
+870
+90
+924
+150
 nP1
 0.0
 1
@@ -828,10 +764,10 @@ nP1
 Number
 
 INPUTBOX
-1305
-146
-1355
-206
+872
+163
+922
+223
 nP2
 0.0
 1
@@ -839,43 +775,43 @@ nP2
 Number
 
 INPUTBOX
-1304
-218
-1354
-278
+871
+235
+921
+295
 nP3
-200.0
+20.0
 1
 0
 Number
 
 INPUTBOX
-1305
-286
-1355
-346
+872
+303
+922
+363
 nP4
-1000.0
+10.0
 1
 0
 Number
 
 INPUTBOX
-1307
-361
-1357
-421
+874
+378
+924
+438
 nP5
-100.0
+10.0
 1
 0
 Number
 
 INPUTBOX
-1309
-434
-1359
-494
+876
+451
+926
+511
 nP6
 0.0
 1
@@ -883,21 +819,21 @@ nP6
 Number
 
 INPUTBOX
-1265
-11
-1357
-71
+863
+23
+955
+83
 Llegada_pedido
-500.0
+30.0
 1
 0
 Number
 
 SLIDER
-694
-517
-894
-550
+589
+520
+789
+553
 Base-presupuesto-procesamiento
 Base-presupuesto-procesamiento
 0
@@ -909,10 +845,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-908
-519
-1080
-552
+803
+522
+975
+555
 Max-costo-proc
 Max-costo-proc
 0
@@ -924,10 +860,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-1093
-518
-1265
-551
+988
+521
+1160
+554
 Max-desc-subasta
 Max-desc-subasta
 0
@@ -939,10 +875,10 @@ NIL
 HORIZONTAL
 
 MONITOR
-942
-129
-1011
-174
+981
+283
+1050
+328
 Makespan
 makespan
 17
@@ -950,10 +886,10 @@ makespan
 11
 
 BUTTON
-762
-65
-837
-98
+748
+62
+823
+95
 go once
 go
 NIL
