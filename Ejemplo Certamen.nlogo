@@ -33,7 +33,7 @@ end
 
 to crear_layout
   ask patch 0 0 [set pcolor white set plabel "cola-M1" set plabel-color black]
-  ask patch 1 0 [ set plabel "M1" set plabel-color white set tpp1 1 set tpp2 2 set pcolor green]
+  ask patch 1 0 [ set plabel "M1" set plabel-color white set tpp1 1 set tpp2 2 set pcolor lime]
   ask patch 2 0 [set pcolor grey set plabel "cola-M2" set plabel-color black]
   ask patch 3 2 [set plabel "M2" set plabel-color white set tpp1 3 set tpp2 8 set pcolor green]
   ask patch 3 -2 [set plabel "M4" set plabel-color white set tpp1 3 set tpp2 8 set pcolor green]
@@ -127,7 +127,7 @@ ask turtles-on patches with [plabel = "M3"]
 
 
 
-  ask patches with [plabel = "M1"] [ifelse any? lotes-here [set pcolor orange] [set pcolor green]]
+  ask patches with [plabel = "M1"] [ifelse any? lotes-here [set pcolor magenta] [set pcolor lime]]
   ask patches with [plabel = "M2"] [ifelse any? lotes-here [set pcolor orange] [set pcolor green]]
   ask patches with [plabel = "M3"] [ifelse any? lotes-here [set pcolor orange] [set pcolor green]]
   ask patches with [plabel = "M4"] [ifelse any? lotes-here [set pcolor orange] [set pcolor green]]
@@ -201,164 +201,39 @@ to subastar-uso-M1
 
 
  if any? lotes-on patch 0 0 [
-  let ofertantes lotes-on patch 0 0
-
-  ask patches with [plabel = "M1"] [set num_ofertas_ronda 0
-                                    set costo_procesamiento Max-costo-proc * .8 * (count turtles-here) + .2 * Max-costo-proc ; la cantidad de tortugas en la máquina se toma como la utilización, debería ser 0 o 1
-                                    set descuento (Max-desc-subasta * (1 - tasa-exito-subasta ) )
-                                    ]
-
-ask ofertantes  [set oferta_M1 (.9 * (presupuesto-M1 / 2))]
-
-;mientras no haya un agente que ofrezca más de procesamiento
-
-
-    ifelse not any? ofertantes with [oferta_M1 >= [costo_procesamiento] of patch 0 0]
-
-    [ while [not any? ofertantes with [oferta_M1 >= [costo_procesamiento] of patch 0 0]]
-
-  [show "M1"
-    ask patches with [plabel = "M1"]
-      [        set costo_procesamiento (costo_procesamiento - descuento)
-        set num_ofertas_ronda (num_ofertas_ronda + 1 )      ]
-    ask ofertantes [set oferta_M1 (riesgo_procesamiento_M1 * oferta_M1)]    ]    ]
-
-[ask patches with [plabel = "M1"] [set num_ofertas_ronda (num_ofertas_ronda + 1 )] ]
-
-
-let mejores_postores ofertantes with [oferta_M1 >= [costo_procesamiento] of patch 0 0]
-
- ask max-one-of mejores_postores [oferta_M1] [move-to patch 1 0 ]
- ask patches with [plabel = "M1"] [set tasa-exito-subasta (1 /(1 + num_ofertas_ronda))]  ; se fija la tasa de éxitos como los éxitos en la última ronda, pero puede ser un registro de toda la historia de subastas
-
+    ask lotes-on patch 0 0 [
+      ifelse any? patches with [pcolor = green] [set oferta_M1 1 / tpM1] [set oferta_M1 tpM1] ;
+    ]
+ ask max-one-of lotes-on patch 0 0 [oferta_M1] [move-to patch 1 0 ]
 ]
 
 end
 
 to subastar-uso-M2
 
-  if any? lotes-on patches with [plabel = "cola-M2"]   [
-  let ofertantes lotes-on patches with [plabel = "cola-M2"]
+ if any? lotes-on patches with [plabel = "cola-M2"]   [
 
-
-
-  ask patches with [plabel = "M2"] [set num_ofertas_ronda 0
-                                    set costo_procesamiento Max-costo-proc * .8 * (count turtles-here) + .2 * Max-costo-proc ; la cantidad de tortugas en la máquina se toma como la utilización, debería ser 0 o 1
-                                    set descuento (Max-desc-subasta * (1 - tasa-exito-subasta ) )
-                                    ]
-
-
-
-ifelse not any? ofertantes with [oferta_M2 >= one-of [costo_procesamiento] of patches with [plabel = "M2"]]
-    [  while [ not any? ofertantes with [oferta_M2 >= one-of [costo_procesamiento] of patches with [plabel = "M2"]] and [num_ofertas_ronda] of patch 3 2 < 100]
-  [ show "subasta M2"
-    ask patches with [plabel = "M2"]
-      [
-        set costo_procesamiento (costo_procesamiento - descuento)
-        set num_ofertas_ronda (num_ofertas_ronda + 1 )
-          show num_ofertas_ronda
-      ]
-
-    ask ofertantes [set oferta_M1 (riesgo_procesamiento_M2 * oferta_M2)]
-   ]
-]
-
-
-  [ask patches with [plabel = "M2"] [set num_ofertas_ronda (num_ofertas_ronda + 1 )]]
-
-
-    if  [num_ofertas_ronda] of patch 3 2 < 100
-
-  [let mejores_postores ofertantes with [oferta_M2 >= one-of [costo_procesamiento] of patches with [plabel = "M2"]]
-
- ask max-one-of mejores_postores [oferta_M2] [move-to patch 3 2 ]
- ask patches with [plabel = "M2"] [set tasa-exito-subasta (1 /(1 + num_ofertas_ronda))]  ; se fija la tasa de éxitos como los éxitos en la última ronda, pero puede ser un registro de toda la historia de subastas
+ ask max-one-of lotes-on patches with [plabel = "cola-M2"] [tpM2] [move-to patch 3 2 ]
     ]
-    ]
+
 end
 
 to subastar-uso-M3
  if any? lotes-on patches with [plabel = "cola-M2"]   [
-  let ofertantes lotes-on patches with [plabel = "cola-M2"]
 
+ ask max-one-of lotes-on patches with [plabel = "cola-M2"] [tpM2] [move-to patch 3 0 ]
+    ]
 
-
-  ask patches with [plabel = "M2"] [set num_ofertas_ronda 0
-                                    set costo_procesamiento Max-costo-proc * .8 * (count turtles-here) + .2 * Max-costo-proc ; la cantidad de tortugas en la máquina se toma como la utilización, debería ser 0 o 1
-                                    set descuento (Max-desc-subasta * (1 - tasa-exito-subasta ) )
-                                    show descuento
-                                    ]
-
-  ask ofertantes  [set oferta_M2 (.9 * (presupuesto-M2 / 2))]
-
-
-
-
-ifelse not any? ofertantes with [oferta_M2 >= one-of [costo_procesamiento] of patches with [plabel = "M3"]]
-
-[  while [ not any? ofertantes with [oferta_M2 >= one-of [costo_procesamiento] of patches with [plabel = "M3"]] ]
-
-
-  [ show "subasta M3"
-    ask patches with [plabel = "M3"]
-      [
-        set costo_procesamiento (costo_procesamiento - descuento)
-        set num_ofertas_ronda (num_ofertas_ronda + 1 )
-      ]
-
-
-    ask ofertantes [set oferta_M1 (riesgo_procesamiento_M2 * oferta_M2)]
-   ]
-]
-  [ask patches with [plabel = "M3"] [set num_ofertas_ronda (num_ofertas_ronda + 1 )]]
-
-;
-
-  let mejores_postores ofertantes with [oferta_M2 >= one-of [costo_procesamiento] of patches with [plabel = "M3"]]
-
- ask max-one-of mejores_postores [oferta_M2] [move-to patch 3 0 ]
- ask patches with [plabel = "M3"] [set tasa-exito-subasta (1 / (1 + num_ofertas_ronda))]  ; se fija la tasa de éxitos como los éxitos en la última ronda, pero puede ser un registro de toda la historia de subastas
-]
 end
 
 
 to subastar-uso-M4
-if any? lotes-on patches with [plabel = "cola-M2"]   [
-  let ofertantes lotes-on patches with [plabel = "cola-M2"]
+ if any? lotes-on patches with [plabel = "cola-M2"]   [
+
+ ask max-one-of lotes-on patches with [plabel = "cola-M2"] [tpM2] [move-to patch 3 -2 ]
+    ]
 
 
-  ask patches with [plabel = "M4"] [set num_ofertas_ronda 0
-                                    set costo_procesamiento Max-costo-proc * .8 * (count turtles-here) + .2 * Max-costo-proc ; la cantidad de tortugas en la máquina se toma como la utilización, debería ser 0 o 1
-                                    set descuento (Max-desc-subasta * (1 - tasa-exito-subasta ) )
-                                    ]
-
-  ask ofertantes  [set oferta_M2 (.9 * (presupuesto-M2 / 2))]
-
-
-ifelse not any? ofertantes with [oferta_M2 >= one-of [costo_procesamiento] of patches with [plabel = "M4"]]
-
-[  while [ not any? ofertantes with [oferta_M2 >= one-of [costo_procesamiento] of patches with [plabel = "M4"]] ]
-
-
-  [ show "subasta M4"
-    ask patches with [plabel = "M4"]
-      [
-        set costo_procesamiento (costo_procesamiento - descuento)
-        set num_ofertas_ronda (num_ofertas_ronda + 1 )
-      ]
-
-
-    ask ofertantes [set oferta_M1 (riesgo_procesamiento_M2 * oferta_M2)]
-   ]
-]
-  [ask patches with [plabel = "M4"] [set num_ofertas_ronda (num_ofertas_ronda + 1 )]]
-
-
-  let mejores_postores ofertantes with [oferta_M2 >= one-of [costo_procesamiento] of patches with [plabel = "M4"]]
-
- ask max-one-of mejores_postores [oferta_M2] [move-to patch 3 -2 ]
- ask patches with [plabel = "M4"] [set tasa-exito-subasta (1 /(1 + num_ofertas_ronda))]  ; se fija la tasa de éxitos como los éxitos en la última ronda, pero puede ser un registro de toda la historia de subastas
-]
 end
 
 
@@ -415,7 +290,7 @@ GRAPHICS-WINDOW
 151
 16
 506
-510
+511
 -1
 -1
 69.43
@@ -502,7 +377,7 @@ T_P1_M1
 T_P1_M1
 1
 10
-1.0
+2.0
 1
 1
 NIL
@@ -517,7 +392,7 @@ T_P1_M2
 T_P1_M2
 3
 60
-7.0
+8.0
 1
 1
 NIL
