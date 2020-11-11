@@ -1,15 +1,15 @@
 breed [lotes lote]
 ;TODO definiciones de atributos
 
-lotes-own [tpM1 tpM2 poS tiempo_proceso_total tiempo_proceso_actual pos1 pos2
-  presupuesto-M1 presupuesto-M2
+lotes-own [tpM1 tpM2  tiempo_proceso_total tiempo_proceso_actual
+
   oferta_M1 oferta_M2
-  riesgo_procesamiento_M1 riesgo_procesamiento_M2]
+  ]
 
 
-patches-own [tpp1 tpp2 costo_procesamiento ultima-subasta num_ofertas_ronda tasa-exito-subasta descuento]
+patches-own [costo_procesamiento  num_ofertas_ronda tasa-exito-subasta descuento]
 
-;globals [tiempo posiciones final ite ite2 max1 max2 max3 tp_max_M1]
+
 globals [makespan]
 
 ;==========================================Procedimientos para el setup====================================================
@@ -25,22 +25,22 @@ to setup
 
   ]
   diferenciacion
-  fijar-presupuesto-inicial
-  ;posicion
+
+
   reset-ticks
 
 end
 
 to crear_layout
   ask patch 0 0 [set pcolor white set plabel "cola-M1" set plabel-color black]
-  ask patch 1 0 [ set plabel "M1" set plabel-color white set tpp1 1 set tpp2 2 set pcolor lime]
+  ask patch 1 0 [ set plabel "M1" set plabel-color white  set pcolor lime]
   ask patch 2 0 [set pcolor grey set plabel "cola-M2" set plabel-color black]
-  ask patch 3 2 [set plabel "M2" set plabel-color white set tpp1 3 set tpp2 8 set pcolor green]
-  ask patch 3 -2 [set plabel "M4" set plabel-color white set tpp1 3 set tpp2 8 set pcolor green]
-  ask patch 3 0 [set plabel "M3" set plabel-color white set tpp1 3 set tpp2 8 set pcolor green]
+  ask patch 3 2 [set plabel "M2" set plabel-color white  set pcolor green]
+  ask patch 3 -2 [set plabel "M4" set plabel-color white set pcolor green]
+  ask patch 3 0 [set plabel "M3" set plabel-color white  set pcolor green]
    ask patch 4 0 [set pcolor grey set plabel "PT" set plabel-color black]
 
-  ask patches [set ultima-subasta 0 set num_ofertas_ronda 0 set tasa-exito-subasta 0]
+
 end
 
 
@@ -51,33 +51,11 @@ to diferenciacion
   if P4 > 0 [ask n-of P4  lotes with [color = white] [set color yellow set tpM1 T_P4_M1 set tpM2 T_P4_M2 ]]
   if P5 > 0 [ask n-of P5  lotes with [color = white] [set color pink set tpM1 T_P5_M1 set tpM2 T_P5_M2 ]]
   if P6 > 0 [ask n-of P6  lotes with [color = white] [set color brown set tpM1 T_P6_M1 set tpM2 T_P6_M2 ]]
-  ask lotes [set riesgo_procesamiento_M1 (1 + (tpM1 / 10))
-                set riesgo_procesamiento_M2 (1 + (tpM2 / 10))] ; 10 es el máximo tiempo de procesamiento en una máquina
+
 end
 
-to fijar-presupuesto-inicial
-  ask lotes [
-              set presupuesto-M1 (Base-presupuesto-procesamiento / tpM1 )
-              set presupuesto-M2 (Base-presupuesto-procesamiento * tpM2 )
-              set oferta_M2 0]
-end
 
-;to posicion ;???
-;
-;  if funcion = "Negociacion"[
-;
-;  ]
-;
-;  if funcion = "Entrenar" [
-;    let aux3 0
-;    set posiciones shuffle (n-values count lotes [i -> i])
-;    foreach [who] of lotes [x -> ask lote x [set poS item aux3 posiciones set aux3 aux3 + 1]]
-;  ]
-;
-;
-;  if funcion = "Makespan" [ask turtles [set poS pos1]]
-;  if funcion = "Tiempo Medio Finalizacion" [ask turtles [set poS pos2]]
-;end
+
 
 
 ;==========================================Procedimientos para la Ejecución====================================================
@@ -101,7 +79,7 @@ to go
 ask turtles-on patches with [plabel = "M2"]
    [if tiempo_proceso_actual = round(tpM2 + (tpM2 * (1 - Tasa_M2)))
       ;si su tiempo_proceso_actual es igual tiempo de procesamiento de la máquina se ejecuta análisis
-      [
+      [set tiempo_proceso_total ticks + 1
           move-to patch 4 0
        if any? lotes-on patch 2 0 [ifelse count lotes-on patch 2 0 = 1 [ask lotes-on patch 2 0 [move-to patch 3 2] ]  [subastar-uso-M2] ]
        ]      ]
@@ -109,7 +87,7 @@ ask turtles-on patches with [plabel = "M2"]
 
 ask turtles-on patches with [plabel = "M3"]
    [if tiempo_proceso_actual = round(tpM2 + (tpM2 * (1 - Tasa_M3)))
-        [set tiempo_proceso_total ticks
+        [set tiempo_proceso_total ticks + 1
           move-to patch 4 0
 
           if any? lotes-on patch 2 0 [ifelse count lotes-on patch 2 0 = 1 [ask lotes-on patch 2 0 [move-to patch 3 0] ][subastar-uso-M3]]
@@ -118,7 +96,7 @@ ask turtles-on patches with [plabel = "M3"]
 
  ask turtles-on patches with [plabel = "M4"]
    [if tiempo_proceso_actual = round(tpM2 + (tpM2 * (1 - Tasa_M4)))
-      [set tiempo_proceso_total ticks
+      [set tiempo_proceso_total ticks + 1
         move-to patch 4 0
           if any? lotes-on patch 2 0 [
             ifelse count lotes-on patch 2 0 = 1 [ask lotes-on patch 2 0 [move-to patch 3 -2] ][subastar-uso-M4]]
@@ -150,17 +128,6 @@ ask turtles-on patches with [plabel = "M3"]
 
 
 end
-
-
-
-;
-;  [
-;    ;show max [tiempo_proceso_total] of lotes
-;    set final max [tiempo_proceso_total] of lotes
-;    makespan
-;    TMFin
-;    ask turtles [move-to patch 1 0 set tiempo_proceso_total 0 set tiempo_proceso_actual 0 set tiempo 0] posicion ;show poS
-;  ]
 
 
 to ir_Centro2 ; primero revisa si las máquinas tipo 2 están vacías, si están ocupadas pasa a la cola para subastar
@@ -202,7 +169,9 @@ to subastar-uso-M1
 
  if any? lotes-on patch 0 0 [
     ask lotes-on patch 0 0 [
-      ifelse any? patches with [pcolor = green] [set oferta_M1 1 / tpM1] [set oferta_M1 tpM1] ;
+      ;ifelse any? patches with [pcolor = green] [set oferta_M1 1 / tpM1] [set oferta_M1 tpM1] ;
+
+    set oferta_M1 1 / tpM1
     ]
  ask max-one-of lotes-on patch 0 0 [oferta_M1] [move-to patch 1 0 ]
 ]
@@ -237,24 +206,6 @@ to subastar-uso-M4
 end
 
 
-
-
-
-;to to-makespan ;???
-;  set ite (sentence ite final) set ite remove 0 ite ;https://ccl.northwestern.edu/netlogo/docs/dictionary.html#se
-;  show ite ;debugging
-;  if min ite = final [ask turtles [set pos1 poS]]
-;end
-;
-;to TMFin ;???
-;  ask turtles-on patch 3 2 [set max1 ((max [tiempo_proceso_total] of lotes-here) / count lotes-here)]
-;  ask turtles-on patch 3 0 [set max2 ((max [tiempo_proceso_total] of lotes-here) / count lotes-here)]
-;  ask turtles-on patch 3 -2 [set max3 ((max [tiempo_proceso_total] of lotes-here) / count lotes-here)]
-;
-;  set ite2 (se ite2 precision ((max1 + max2 + max3) / 3) 3) set ite2 remove 0 ite2
-;  if min ite2 = precision ((max1 + max2 + max3) / 3) 3 [ask turtles [set pos2 poS]]
-;end
-
 to nueva_demanda
   create-lotes nP1 + nP2 + nP3 + nP4 + nP5 + nP6 [
     set color white
@@ -263,7 +214,7 @@ to nueva_demanda
     set label who
   ]
   diferenciacion2
-  fijar_presupuesto_nuevos_lotes
+
 end
 
 to diferenciacion2
@@ -276,15 +227,6 @@ to diferenciacion2
 
 end
 
-to fijar_presupuesto_nuevos_lotes
-  ask turtles-on patch 0 0   [
-
-    if presupuesto-M1 = 0 [
-              set presupuesto-M1 (Base-presupuesto-procesamiento / tpM1 )
-              set presupuesto-M2 (Base-presupuesto-procesamiento * tpM2 )
-              set oferta_M2 0]  ]
-
-end
 @#$#@#$#@
 GRAPHICS-WINDOW
 151
@@ -363,7 +305,7 @@ INPUTBOX
 583
 142
 P1
-101.0
+4.0
 1
 0
 Number
@@ -377,7 +319,7 @@ T_P1_M1
 T_P1_M1
 1
 10
-2.0
+1.0
 1
 1
 NIL
@@ -392,7 +334,7 @@ T_P1_M2
 T_P1_M2
 3
 60
-8.0
+7.0
 1
 1
 NIL
@@ -404,7 +346,7 @@ INPUTBOX
 581
 220
 P2
-0.0
+4.0
 1
 0
 Number
@@ -418,7 +360,7 @@ T_P2_M1
 T_P2_M1
 1
 10
-10.0
+5.0
 1
 1
 NIL
@@ -431,9 +373,9 @@ SLIDER
 209
 T_P2_M2
 T_P2_M2
-3
+2
 100
-41.0
+12.0
 1
 1
 NIL
@@ -445,7 +387,7 @@ INPUTBOX
 581
 289
 P3
-0.0
+3.0
 1
 0
 Number
@@ -456,7 +398,7 @@ INPUTBOX
 581
 358
 P4
-0.0
+2.0
 1
 0
 Number
@@ -467,7 +409,7 @@ INPUTBOX
 581
 424
 P5
-0.0
+3.0
 1
 0
 Number
@@ -478,7 +420,7 @@ INPUTBOX
 581
 490
 P6
-0.0
+2.0
 1
 0
 Number
@@ -492,7 +434,7 @@ T_P3_M1
 T_P3_M1
 1
 10
-8.0
+3.0
 1
 1
 NIL
@@ -505,9 +447,9 @@ SLIDER
 279
 T_P3_M2
 T_P3_M2
-3
+1
 100
-42.0
+9.0
 1
 1
 NIL
@@ -522,7 +464,7 @@ T_P4_M1
 T_P4_M1
 1
 10
-10.0
+2.0
 1
 1
 NIL
@@ -537,7 +479,7 @@ T_P4_M2
 T_P4_M2
 3
 100
-40.0
+8.0
 1
 1
 NIL
@@ -552,7 +494,7 @@ T_P5_M1
 T_P5_M1
 1
 10
-10.0
+6.0
 1
 1
 NIL
@@ -561,13 +503,13 @@ HORIZONTAL
 SLIDER
 700
 381
-792
+860
 414
 T_P5_M2
 T_P5_M2
 3
 100
-50.0
+15.0
 1
 1
 NIL
@@ -582,7 +524,7 @@ T_P6_M1
 T_P6_M1
 1
 10
-10.0
+4.0
 1
 1
 NIL
@@ -590,14 +532,14 @@ HORIZONTAL
 
 SLIDER
 699
-446
-791
-479
+447
+859
+480
 T_P6_M2
 T_P6_M2
 3
 100
-52.0
+20.0
 1
 1
 NIL
@@ -686,7 +628,7 @@ INPUTBOX
 1357
 133
 nP1
-0.0
+4.0
 1
 0
 Number
@@ -697,7 +639,7 @@ INPUTBOX
 1355
 206
 nP2
-0.0
+1.0
 1
 0
 Number
@@ -708,7 +650,7 @@ INPUTBOX
 1354
 278
 nP3
-20.0
+5.0
 1
 0
 Number
@@ -719,7 +661,7 @@ INPUTBOX
 1355
 346
 nP4
-10.0
+2.0
 1
 0
 Number
@@ -730,7 +672,7 @@ INPUTBOX
 1357
 421
 nP5
-10.0
+3.0
 1
 0
 Number
@@ -741,7 +683,7 @@ INPUTBOX
 1359
 494
 nP6
-0.0
+1.0
 1
 0
 Number
