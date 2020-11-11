@@ -10,7 +10,7 @@ lotes-own [tpM1 tpM2  tiempo_proceso_total tiempo_proceso_actual
 
 
 
-globals [makespan registro_M1 tmp_esperado_M1 tmp_M1]
+globals [makespan registro_M1 tmp_utilizacion_M2 tmp_utilizacion_M3 tmp_utilizacion_M4  tmp_esperado_M1 tmp_M1]
 
 ;==========================================Procedimientos para el setup====================================================
 
@@ -24,6 +24,8 @@ to setup
     set label who
 
   ]
+
+
   diferenciacion
 
   foreach [tpM1] of lotes
@@ -86,7 +88,8 @@ to go
 ask turtles-on patches with [plabel = "M2"]
    [if tiempo_proceso_actual = round(tpM2 + (tpM2 * (1 - Tasa_M2)))
       ;si su tiempo_proceso_actual es igual tiempo de procesamiento de la máquina se ejecuta análisis
-      [set tiempo_proceso_total ticks
+      [set tmp_utilizacion_M2 tmp_utilizacion_M2 + tiempo_proceso_actual
+        set tiempo_proceso_total ticks
           move-to patch 4 0
        if any? lotes-on patch 2 0 [ifelse count lotes-on patch 2 0 = 1 [ask lotes-on patch 2 0 [move-to patch 3 2] ]  [subastar-uso-M2] ]
        ]      ]
@@ -94,15 +97,18 @@ ask turtles-on patches with [plabel = "M2"]
 
 ask turtles-on patches with [plabel = "M3"]
    [if tiempo_proceso_actual = round(tpM2 + (tpM2 * (1 - Tasa_M3)))
-        [set tiempo_proceso_total ticks
+        [set tmp_utilizacion_M3 tmp_utilizacion_M3 + tiempo_proceso_actual
+        set tiempo_proceso_total ticks
           move-to patch 4 0
 
           if any? lotes-on patch 2 0 [ifelse count lotes-on patch 2 0 = 1 [ask lotes-on patch 2 0 [move-to patch 3 0] ][subastar-uso-M3]]
        ]     ]
 
  ask turtles-on patches with [plabel = "M4"]
-   [if tiempo_proceso_actual = round(tpM2 + (tpM2 * (1 - Tasa_M4)))
-      [set tiempo_proceso_total ticks
+   [
+      if tiempo_proceso_actual = round(tpM2 + (tpM2 * (1 - Tasa_M4)))
+      [set tmp_utilizacion_M4 tmp_utilizacion_M4 + tiempo_proceso_actual
+        set tiempo_proceso_total ticks
         move-to patch 4 0
           if any? lotes-on patch 2 0 [
             ifelse count lotes-on patch 2 0 = 1 [ask lotes-on patch 2 0 [move-to patch 3 -2] ][subastar-uso-M4]]
@@ -131,9 +137,9 @@ ask turtles-on patches with [plabel = "M3"]
     ]
 
     ;resultados
-    [show "fin"
+    [
     set makespan max [tiempo_proceso_total] of lotes
-
+    stop
     ]
 
 
@@ -155,13 +161,12 @@ to subastar-uso-M1
 
 
  if any? lotes-on patch 0 0 [
-    ask lotes-on patch 0 0 [
-      ;ifelse any? patches with [pcolor = green] [set oferta_M1 1 / tpM1] [set oferta_M1 tpM1] ;
+    if Heuristica = "Propuesta" [ask lotes-on patch 0 0 [set oferta_M1 1 / tpM1]
+    ask max-one-of lotes-on patch 0 0 [oferta_M1] [move-to patch 1 0 set tmp_esperado_M1 tmp_esperado_M1 + tpM1]  ]
 
-    set oferta_M1 1 / tpM1
-    ]
- ask max-one-of lotes-on patch 0 0 [oferta_M1] [move-to patch 1 0 set tmp_esperado_M1 tmp_esperado_M1 + tpM1]
-]
+    if Heuristica = "SPT" [ask min-one-of lotes-on patch 0 0 [tpM1] [move-to patch 1 0]  ]
+
+  ]
 
 end
 
@@ -169,16 +174,29 @@ to subastar-uso-M2
 
  if any? lotes-on patches with [plabel = "cola-M2"]   [
 
- ask max-one-of lotes-on patches with [plabel = "cola-M2"] [tpM2] [move-to patch 3 2 ]
-    ]
+    if Heuristica = "Propuesta" [ask max-one-of lotes-on patches with [plabel = "cola-M2"] [tpM2] [move-to patch 3 2 ]]
+
+
+  if Heuristica = "SPT" [ask min-one-of lotes-on patches with [plabel = "cola-M2"] [tpM2] [move-to patch 3 2]  ]
+
+
+
+
+  ]
+
+
 
 end
 
 to subastar-uso-M3
  if any? lotes-on patches with [plabel = "cola-M2"]   [
 
- ask max-one-of lotes-on patches with [plabel = "cola-M2"] [tpM2] [move-to patch 3 0 ]
-    ]
+    if Heuristica = "Propuesta" [ask max-one-of lotes-on patches with [plabel = "cola-M2"] [tpM2] [move-to patch 3 0 ]]
+
+    if Heuristica = "SPT" [ask min-one-of lotes-on patches with [plabel = "cola-M2"] [tpM2] [move-to patch 3 0 ]  ]
+
+
+  ]
 
 end
 
@@ -186,9 +204,13 @@ end
 to subastar-uso-M4
  if any? lotes-on patches with [plabel = "cola-M2"]   [
 
- ask max-one-of lotes-on patches with [plabel = "cola-M2"] [tpM2] [move-to patch 3 -2 ]
-    ]
+    if Heuristica = "Propuesta" [ask max-one-of lotes-on patches with [plabel = "cola-M2"] [tpM2] [move-to patch 3 -2 ]  ]
 
+    if Heuristica = "SPT" [ask min-one-of lotes-on patches with [plabel = "cola-M2"] [tpM2] [move-to patch 3 -2 ]  ]
+
+
+
+  ]
 
 end
 
@@ -580,7 +602,7 @@ INPUTBOX
 897
 72
 Llegada_pedido
-30.0
+59.0
 1
 0
 Number
@@ -680,10 +702,10 @@ T_P6_M2
 Number
 
 MONITOR
-401
-498
-480
-543
+552
+510
+631
+555
 registro_M1
 registro_M1
 0
@@ -691,26 +713,47 @@ registro_M1
 11
 
 MONITOR
-398
-450
-514
-495
+644
+511
+761
+556
 NIL
-tmp_esperado_M1
+tmp_utilizacion_M2
 17
 1
 11
 
 MONITOR
-118
-346
-175
-391
+770
+509
+887
+554
 NIL
-tmp_M1
-0
+tmp_utilizacion_M3
+17
 1
 11
+
+MONITOR
+899
+509
+1016
+554
+NIL
+tmp_utilizacion_M4
+17
+1
+11
+
+CHOOSER
+1123
+319
+1261
+364
+Heuristica
+Heuristica
+"SPT" "Propuesta"
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -1058,6 +1101,667 @@ NetLogo 6.1.1
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
+<experiments>
+  <experiment name="experiment" repetitions="10" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <metric>makespan</metric>
+    <enumeratedValueSet variable="Tasa_M2">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="Tasa_M3">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="Tasa_M4">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P6_M2">
+      <value value="20"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="P2">
+      <value value="4"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="P3">
+      <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P5_M2">
+      <value value="15"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="P4">
+      <value value="2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P4_M2">
+      <value value="8"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="Tasa_M1">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="P5">
+      <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="Llegada_pedido">
+      <value value="30"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P3_M2">
+      <value value="9"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="P6">
+      <value value="2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P2_M2">
+      <value value="12"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P1_M1">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P1_M2">
+      <value value="7"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="nP6">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P6_M1">
+      <value value="4"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="P1">
+      <value value="4"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P5_M1">
+      <value value="6"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P4_M1">
+      <value value="2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="nP1">
+      <value value="4"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P3_M1">
+      <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="nP2">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="nP3">
+      <value value="5"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P2_M1">
+      <value value="5"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="nP4">
+      <value value="2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="nP5">
+      <value value="3"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="distintos tiempos llegada" repetitions="1" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <metric>makespan</metric>
+    <enumeratedValueSet variable="Tasa_M2">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="Tasa_M3">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="Tasa_M4">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P6_M2">
+      <value value="20"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="P2">
+      <value value="4"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="P3">
+      <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P5_M2">
+      <value value="15"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="P4">
+      <value value="2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P4_M2">
+      <value value="8"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="Tasa_M1">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="P5">
+      <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="Llegada_pedido">
+      <value value="10"/>
+      <value value="20"/>
+      <value value="30"/>
+      <value value="40"/>
+      <value value="50"/>
+      <value value="60"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P3_M2">
+      <value value="9"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="P6">
+      <value value="2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P2_M2">
+      <value value="12"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P1_M1">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P1_M2">
+      <value value="7"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="nP6">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P6_M1">
+      <value value="4"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="P1">
+      <value value="4"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P5_M1">
+      <value value="6"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P4_M1">
+      <value value="2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="nP1">
+      <value value="4"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P3_M1">
+      <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="nP2">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="nP3">
+      <value value="5"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P2_M1">
+      <value value="5"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="nP4">
+      <value value="2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="nP5">
+      <value value="3"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="experimento 3 makespan tmp-utilizacion" repetitions="1" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <metric>makespan</metric>
+    <metric>registro_M1</metric>
+    <metric>tmp_utilizacion_M2</metric>
+    <metric>tmp_utilizacion_M3</metric>
+    <metric>tmp_utilizacion_M4</metric>
+    <enumeratedValueSet variable="Tasa_M2">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="Tasa_M3">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="Tasa_M4">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P6_M2">
+      <value value="20"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="P2">
+      <value value="4"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="P3">
+      <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P5_M2">
+      <value value="15"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="P4">
+      <value value="2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P4_M2">
+      <value value="8"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="Tasa_M1">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="P5">
+      <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="Llegada_pedido">
+      <value value="10"/>
+      <value value="20"/>
+      <value value="30"/>
+      <value value="40"/>
+      <value value="50"/>
+      <value value="60"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P3_M2">
+      <value value="9"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="P6">
+      <value value="2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P2_M2">
+      <value value="12"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P1_M1">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P1_M2">
+      <value value="7"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="nP6">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P6_M1">
+      <value value="4"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="P1">
+      <value value="4"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P5_M1">
+      <value value="6"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P4_M1">
+      <value value="2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="nP1">
+      <value value="4"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P3_M1">
+      <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="nP2">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="nP3">
+      <value value="5"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P2_M1">
+      <value value="5"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="nP4">
+      <value value="2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="nP5">
+      <value value="3"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="experiment4 spt vs propuesta" repetitions="1" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <metric>makespan</metric>
+    <metric>registro_M1</metric>
+    <metric>tmp_utilizacion_M2</metric>
+    <metric>tmp_utilizacion_M3</metric>
+    <metric>tmp_utilizacion_M4</metric>
+    <enumeratedValueSet variable="Tasa_M2">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="Tasa_M3">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="Tasa_M4">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P6_M2">
+      <value value="20"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="P2">
+      <value value="4"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="P3">
+      <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P5_M2">
+      <value value="15"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="P4">
+      <value value="2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P4_M2">
+      <value value="8"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="Tasa_M1">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="P5">
+      <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P3_M2">
+      <value value="9"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="P6">
+      <value value="2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P2_M2">
+      <value value="12"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P1_M1">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P1_M2">
+      <value value="7"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="nP6">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P6_M1">
+      <value value="4"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="P1">
+      <value value="4"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P5_M1">
+      <value value="6"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P4_M1">
+      <value value="2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="nP1">
+      <value value="4"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P3_M1">
+      <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="nP2">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="nP3">
+      <value value="5"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P2_M1">
+      <value value="5"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="nP4">
+      <value value="2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="nP5">
+      <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="Heuristica">
+      <value value="&quot;SPT&quot;"/>
+      <value value="&quot;Propuesta&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="Llegada_pedido">
+      <value value="10"/>
+      <value value="20"/>
+      <value value="30"/>
+      <value value="40"/>
+      <value value="50"/>
+      <value value="60"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="experiment5b spt vs propuesta y cambio tpm2" repetitions="1" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <metric>makespan</metric>
+    <metric>registro_M1</metric>
+    <metric>tmp_utilizacion_M2</metric>
+    <metric>tmp_utilizacion_M3</metric>
+    <metric>tmp_utilizacion_M4</metric>
+    <enumeratedValueSet variable="Tasa_M2">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="Tasa_M3">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="Tasa_M4">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P6_M2">
+      <value value="40"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="P2">
+      <value value="4"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="P3">
+      <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P5_M2">
+      <value value="30"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="P4">
+      <value value="2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P4_M2">
+      <value value="16"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="Tasa_M1">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="P5">
+      <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P3_M2">
+      <value value="18"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="P6">
+      <value value="2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P2_M2">
+      <value value="24"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P1_M1">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P1_M2">
+      <value value="14"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="nP6">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P6_M1">
+      <value value="4"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="P1">
+      <value value="4"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P5_M1">
+      <value value="6"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P4_M1">
+      <value value="2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="nP1">
+      <value value="4"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P3_M1">
+      <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="nP2">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="nP3">
+      <value value="5"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P2_M1">
+      <value value="5"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="nP4">
+      <value value="2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="nP5">
+      <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="Heuristica">
+      <value value="&quot;SPT&quot;"/>
+      <value value="&quot;Propuesta&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="Llegada_pedido">
+      <value value="10"/>
+      <value value="20"/>
+      <value value="30"/>
+      <value value="40"/>
+      <value value="50"/>
+      <value value="60"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="experiment6 spt vs propuesta 60 tiempos" repetitions="1" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <metric>makespan</metric>
+    <metric>registro_M1</metric>
+    <metric>tmp_utilizacion_M2</metric>
+    <metric>tmp_utilizacion_M3</metric>
+    <metric>tmp_utilizacion_M4</metric>
+    <enumeratedValueSet variable="Tasa_M2">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="Tasa_M3">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="Tasa_M4">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P6_M2">
+      <value value="20"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="P2">
+      <value value="4"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="P3">
+      <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P5_M2">
+      <value value="15"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="P4">
+      <value value="2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P4_M2">
+      <value value="8"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="Tasa_M1">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="P5">
+      <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P3_M2">
+      <value value="9"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="P6">
+      <value value="2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P2_M2">
+      <value value="12"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P1_M1">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P1_M2">
+      <value value="7"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="nP6">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P6_M1">
+      <value value="4"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="P1">
+      <value value="4"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P5_M1">
+      <value value="6"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P4_M1">
+      <value value="2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="nP1">
+      <value value="4"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P3_M1">
+      <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="nP2">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="nP3">
+      <value value="5"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="T_P2_M1">
+      <value value="5"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="nP4">
+      <value value="2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="nP5">
+      <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="Heuristica">
+      <value value="&quot;SPT&quot;"/>
+      <value value="&quot;Propuesta&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="Llegada_pedido">
+      <value value="1"/>
+      <value value="2"/>
+      <value value="3"/>
+      <value value="4"/>
+      <value value="5"/>
+      <value value="6"/>
+      <value value="7"/>
+      <value value="8"/>
+      <value value="9"/>
+      <value value="10"/>
+      <value value="11"/>
+      <value value="12"/>
+      <value value="13"/>
+      <value value="14"/>
+      <value value="15"/>
+      <value value="16"/>
+      <value value="17"/>
+      <value value="18"/>
+      <value value="19"/>
+      <value value="20"/>
+      <value value="21"/>
+      <value value="22"/>
+      <value value="23"/>
+      <value value="24"/>
+      <value value="25"/>
+      <value value="26"/>
+      <value value="27"/>
+      <value value="28"/>
+      <value value="29"/>
+      <value value="30"/>
+      <value value="31"/>
+      <value value="32"/>
+      <value value="33"/>
+      <value value="34"/>
+      <value value="35"/>
+      <value value="36"/>
+      <value value="37"/>
+      <value value="38"/>
+      <value value="39"/>
+      <value value="40"/>
+      <value value="41"/>
+      <value value="42"/>
+      <value value="43"/>
+      <value value="44"/>
+      <value value="45"/>
+      <value value="46"/>
+      <value value="47"/>
+      <value value="48"/>
+      <value value="49"/>
+      <value value="50"/>
+      <value value="51"/>
+      <value value="52"/>
+      <value value="53"/>
+      <value value="54"/>
+      <value value="55"/>
+      <value value="56"/>
+      <value value="57"/>
+      <value value="58"/>
+      <value value="59"/>
+      <value value="60"/>
+    </enumeratedValueSet>
+  </experiment>
+</experiments>
 @#$#@#$#@
 @#$#@#$#@
 default
