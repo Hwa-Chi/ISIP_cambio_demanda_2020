@@ -68,7 +68,7 @@ end
 
 to go
 
-  ifelse count turtles != count turtles-on patch 4 0 [
+
 
     if ticks =  Llegada_pedido [ nueva_demanda]
 
@@ -76,7 +76,7 @@ to go
     [subastar-uso-M1]  ]
 
   ask turtles-on patches with [plabel = "M1"]
-   [  if tiempo_proceso_actual = round(tpM1 + (tpM1 * (1 - Tasa_M1)))
+   [  if tiempo_proceso_actual = tpM1
       ;si su tiempo_proceso_actual es igual tiempo de procesamiento de la máquina se ejecuta análisis
       [
        set registro_M1 registro_M1 + tiempo_proceso_actual
@@ -86,7 +86,7 @@ to go
       ]      ]
 
 ask turtles-on patches with [plabel = "M2"]
-   [if tiempo_proceso_actual = round(tpM2 + (tpM2 * (1 - Tasa_M2)))
+   [if tiempo_proceso_actual = tpM2
       ;si su tiempo_proceso_actual es igual tiempo de procesamiento de la máquina se ejecuta análisis
       [set tmp_utilizacion_M2 tmp_utilizacion_M2 + tiempo_proceso_actual
         set tiempo_proceso_total ticks
@@ -96,7 +96,7 @@ ask turtles-on patches with [plabel = "M2"]
 
 
 ask turtles-on patches with [plabel = "M3"]
-   [if tiempo_proceso_actual = round(tpM2 + (tpM2 * (1 - Tasa_M3)))
+   [if tiempo_proceso_actual = tpM2
         [set tmp_utilizacion_M3 tmp_utilizacion_M3 + tiempo_proceso_actual
         set tiempo_proceso_total ticks
           move-to patch 4 0
@@ -106,7 +106,7 @@ ask turtles-on patches with [plabel = "M3"]
 
  ask turtles-on patches with [plabel = "M4"]
    [
-      if tiempo_proceso_actual = round(tpM2 + (tpM2 * (1 - Tasa_M4)))
+      if tiempo_proceso_actual = tpM2
       [set tmp_utilizacion_M4 tmp_utilizacion_M4 + tiempo_proceso_actual
         set tiempo_proceso_total ticks
         move-to patch 4 0
@@ -134,11 +134,9 @@ ask turtles-on patches with [plabel = "M3"]
 
     tick
 
-    ]
 
-    ;resultados
-    [
-    set makespan max [tiempo_proceso_total] of lotes
+  if count turtles = count turtles-on patch 4 0 [
+    set makespan ticks
     stop
     ]
 
@@ -147,9 +145,9 @@ end
 
 
 to ir_Centro2 ; primero revisa si las máquinas tipo 2 están vacías, si están ocupadas pasa a la cola para subastar
-  ifelse not any? lotes-on patch 3 2 [move-to patch 3 2 set tiempo_proceso_total (tiempo_proceso_total + round(tpM2 + (tpM2 * (1 - Tasa_M2))))][
-    ifelse not any? lotes-on patch 3 0 [move-to patch 3 0 set tiempo_proceso_total (tiempo_proceso_total + round(tpM2 + (tpM2 * (1 - Tasa_M3))))][
-      ifelse not any? lotes-on patch 3 -2 [move-to patch 3 -2 set tiempo_proceso_total (tiempo_proceso_total + round(tpM2 + (tpM2 * (1 - Tasa_M4))))] [move-to patch 2 0]]
+  ifelse not any? lotes-on patch 3 2 [move-to patch 3 2][
+    ifelse not any? lotes-on patch 3 0 [move-to patch 3 0 ][
+      ifelse not any? lotes-on patch 3 -2 [move-to patch 3 -2 ] [move-to patch 2 0]]
   ]
 end
 
@@ -173,15 +171,8 @@ end
 to subastar-uso-M2
 
  if any? lotes-on patches with [plabel = "cola-M2"]   [
-
-    if Heuristica = "Propuesta" [ask max-one-of lotes-on patches with [plabel = "cola-M2"] [tpM2] [move-to patch 3 2 ]]
-
-
+  if Heuristica = "Propuesta" [ask max-one-of lotes-on patches with [plabel = "cola-M2"] [tpM2] [move-to patch 3 2 ]]
   if Heuristica = "SPT" [ask min-one-of lotes-on patches with [plabel = "cola-M2"] [tpM2] [move-to patch 3 2]  ]
-
-
-
-
   ]
 
 
@@ -190,12 +181,8 @@ end
 
 to subastar-uso-M3
  if any? lotes-on patches with [plabel = "cola-M2"]   [
-
     if Heuristica = "Propuesta" [ask max-one-of lotes-on patches with [plabel = "cola-M2"] [tpM2] [move-to patch 3 0 ]]
-
     if Heuristica = "SPT" [ask min-one-of lotes-on patches with [plabel = "cola-M2"] [tpM2] [move-to patch 3 0 ]  ]
-
-
   ]
 
 end
@@ -203,13 +190,8 @@ end
 
 to subastar-uso-M4
  if any? lotes-on patches with [plabel = "cola-M2"]   [
-
     if Heuristica = "Propuesta" [ask max-one-of lotes-on patches with [plabel = "cola-M2"] [tpM2] [move-to patch 3 -2 ]  ]
-
     if Heuristica = "SPT" [ask min-one-of lotes-on patches with [plabel = "cola-M2"] [tpM2] [move-to patch 3 -2 ]  ]
-
-
-
   ]
 
 end
@@ -309,10 +291,10 @@ P1
 Number
 
 SLIDER
-605
-99
-697
-132
+598
+83
+690
+116
 T_P1_M1
 T_P1_M1
 1
@@ -335,10 +317,10 @@ P2
 Number
 
 SLIDER
-604
-176
-696
-209
+596
+164
+688
+197
 T_P2_M1
 T_P2_M1
 1
@@ -394,10 +376,10 @@ P6
 Number
 
 SLIDER
-603
-246
-695
-279
+597
+232
+689
+265
 T_P3_M1
 T_P3_M1
 1
@@ -409,10 +391,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-603
-316
-695
-349
+599
+300
+691
+333
 T_P4_M1
 T_P4_M1
 1
@@ -424,10 +406,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-602
-381
-694
-414
+598
+366
+690
+399
 T_P5_M1
 T_P5_M1
 1
@@ -439,76 +421,16 @@ NIL
 HORIZONTAL
 
 SLIDER
-601
-446
-693
-479
+598
+436
+690
+469
 T_P6_M1
 T_P6_M1
 1
 10
 4.0
 1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-1071
-15
-1243
-48
-Tasa_M1
-Tasa_M1
-0
-1
-1.0
-0.1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-1072
-83
-1244
-116
-Tasa_M2
-Tasa_M2
-0
-1
-1.0
-0.1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-1071
-148
-1243
-181
-Tasa_M3
-Tasa_M3
-0
-1
-1.0
-0.1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-1070
-216
-1242
-249
-Tasa_M4
-Tasa_M4
-0
-1
-1.0
-0.1
 1
 NIL
 HORIZONTAL
@@ -608,10 +530,10 @@ Llegada_pedido
 Number
 
 MONITOR
-942
-129
-1011
-174
+26
+25
+95
+70
 Makespan
 makespan
 17
@@ -692,9 +614,9 @@ Number
 
 INPUTBOX
 704
-437
-775
-497
+436
+768
+496
 T_P6_M2
 20.0
 1
@@ -702,21 +624,21 @@ T_P6_M2
 Number
 
 MONITOR
-552
-510
-631
-555
-registro_M1
+495
+550
+612
+595
+tmp_utilizacion_M1
 registro_M1
 0
 1
 11
 
 MONITOR
-644
-511
-761
-556
+622
+550
+739
+595
 NIL
 tmp_utilizacion_M2
 17
@@ -724,10 +646,10 @@ tmp_utilizacion_M2
 11
 
 MONITOR
-770
-509
-887
-554
+748
+548
+865
+593
 NIL
 tmp_utilizacion_M3
 17
@@ -735,10 +657,10 @@ tmp_utilizacion_M3
 11
 
 MONITOR
-899
-509
-1016
-554
+877
+548
+994
+593
 NIL
 tmp_utilizacion_M4
 17
@@ -746,51 +668,68 @@ tmp_utilizacion_M4
 11
 
 CHOOSER
-1123
-319
-1261
-364
+263
+544
+401
+589
 Heuristica
 Heuristica
 "SPT" "Propuesta"
 1
 
 @#$#@#$#@
-## WHAT IS IT?
+## ¿Qué es?
 
-(a general understanding of what the model is trying to show or explain)
+ Una simulación de dos centros de trabajo en serie, el primero con una maquina y el segundo conectado en serie al primero con tres máquinas idénticas en paralelo. 
+Se procesan lotes de productos que toman decisiones de qué máquina asignarse. En un tiempo dado existe un cambio de demanda.
+ 
 
-## HOW IT WORKS
+## ¿Cómo funciona? 
 
-(what rules the agents use to create the overall behavior of the model)
+Los lotes que están por procesar chequean si hay algún trabajo en la máquina 1. Si no hay trabajo es la máquina 1 ellas eligen alguna máquina que tenga el menor tiempo de procesamiento para pasar.
+Cuando uno termina su proceso en el centro 1 revisa si es que hay alguna máquina desocupada si no la hay pasa una cola.
+Cuando un agente termina su proceso en alguna máquina del centro dos esta se comunica con los lotes que están esperando en cola para que ellos decidan cuál es el lote que pasará según el criterio del mayor tiempo de procesamiento en la máquina dos.
 
-## HOW TO USE IT
+La simulación de programó de tal manera que los ticks coinciden con unidad de tiempo.
 
-(how to use the model, including a description of each of the items in the Interface tab)
 
-## THINGS TO NOTICE
+## ¿Cómo usarlo?
 
-(suggested things for the user to notice while running the model)
+Botones 
 
-## THINGS TO TRY
+setup:  genera el layout  y la orden inicial de pedido.
+nueva_demanda: crea nuevos agentes lotes según los valores nP1 a nP6 .
+go: inicia el funcionamiento del modelo hasta que se termina el procesamiento.
+go-once: avanza una unidad de tiempo la simulación.
 
-(suggested things for the user to try to do (move sliders, switches, etc.) with the model)
+ 
+Entradas de datos
 
-## EXTENDING THE MODEL
+P1 a P6: entrada que indica la cantidad de lotes de distintos tipos de productos productos en la orden inicial
 
-(suggested things to add or change in the Code tab to make the model more complicated, detailed, accurate, etc.)
+nP1 a nP6: entrada que indica el número de lotes de cada tipo de productos que llegan en un nuevo pedido. 
 
-## NETLOGO FEATURES
+T_PX_M1: deslizador para fijar el tiempo de proceso de un lote de producto X en la  máquina 1.
+T_PX_M2: entrada que indica el tiempo de proceso de los lotes de tipo de producto X máquina 2,3 y 4. Debe ser al menor 3 veces mayor que el valor T_PX_M1 respectivo para que se genere una cola para el centro 2
 
-(interesting or unusual features of NetLogo that the model uses, particularly in the Code tab; or where workarounds were needed for missing features)
+Llegada_pedido: Tiempo de proceso en el cual llega nueva demanda.
 
-## RELATED MODELS
+Seleccionador
 
-(models in the NetLogo Models Library and elsewhere which are of related interest)
+Heuristica: selecciona el comportamiento de los agentes al momento de elegir qué agente. La alternativa "SPT" hace que los agentes en cola siempre elijan al agente con menor tiempo de procesamiento en la siguiente máquina. La alternativa "Propuesta" hace que se elija el menor tiempo de procesamiento para usar la máquina M1 y el mayor tiempo de procesamiento para la máquina M2, M3 y M4- 
 
-## CREDITS AND REFERENCES
 
-(a reference to the model's URL on the web if it has one, as well as any other necessary credits, citations, and links)
+Salidas
+
+Tmp_utilización_M1 a Tmp_utilización_M4 : Tiempo de uso de las máquina 1 a la 4, respectivamente.
+
+
+Makespan: señala el tiempo en que finalizó el procesamiento del último lote.
+
+
+## Créditos y referencias
+
+Parte del código se basó en lo visto en clases prácticas.
 @#$#@#$#@
 default
 true
