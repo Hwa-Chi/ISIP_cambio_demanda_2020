@@ -1,194 +1,299 @@
-breed [walkers walker]
+breed [lotes lote]
+;TODO definiciones de atributos
 
-walkers-own [tpM1 tpM2 poS tp tpp pos1 pos2 tmp-entrega dinero]
-;
-;
-;
-;
-patches-own [tpp1 tpp2]
-globals [tiempo posiciones final ite ite2 max1 max2 max3]
+lotes-own [tpM1 tpM2 poS tiempo_proceso_total tiempo_proceso_actual pos1 pos2
+  presupuesto-M1 presupuesto-M2
+  oferta_M1 oferta_M2
+  riesgo_procesamiento_M1 riesgo_procesamiento_M2]
+
+
+patches-own [tpp1 tpp2 costo_procesamiento ultima-subasta num_ofertas_ronda tasa-exito-subasta descuento]
+
+;globals [tiempo posiciones final ite ite2 max1 max2 max3 tp_max_M1]
+globals [makespan]
+
+;==========================================Procedimientos para el setup====================================================
 
 to setup
   ca
-  nodos
-  create-walkers (P1 + P2 + P3 + P4 + P5 + P6) / Lote_min [
+  crear_layout
+  create-lotes P1 + P2 + P3 + P4 + P5 + P6 [
     set color white
-    move-to patch 1 0
+    move-to patch 0 0 ;funcionará como cola para M1
     set size 0.5 set heading 90
     set label who
 
   ]
   diferenciacion
-  posicion
+  fijar-presupuesto-inicial
+  ;posicion
   reset-ticks
+
 end
 
-to nodos
-  ask patch 1 0 [set pcolor blue set plabel "M1" set plabel-color white set tpp1 1 set tpp2 2]
-  ask patch 3 2 [set pcolor blue set plabel "M2" set plabel-color white set tpp1 3 set tpp2 8 set pcolor orange]
-  ask patch 3 -2 [set pcolor blue set plabel "M4" set plabel-color white set tpp1 3 set tpp2 8 set pcolor orange]
-  ask patch 3 0 [set pcolor blue set plabel "M3" set plabel-color white set tpp1 3 set tpp2 8 set pcolor orange]
-  ask patch 5 0 [set pcolor blue set plabel "B0" set plabel-color white]
+to crear_layout
+  ask patch 0 0 [set pcolor white set plabel "cola-M1" set plabel-color black]
+  ask patch 1 0 [ set plabel "M1" set plabel-color white set tpp1 1 set tpp2 2 set pcolor lime]
+  ask patch 2 0 [set pcolor grey set plabel "cola-M2" set plabel-color black]
+  ask patch 3 2 [set plabel "M2" set plabel-color white set tpp1 3 set tpp2 8 set pcolor green]
+  ask patch 3 -2 [set plabel "M4" set plabel-color white set tpp1 3 set tpp2 8 set pcolor green]
+  ask patch 3 0 [set plabel "M3" set plabel-color white set tpp1 3 set tpp2 8 set pcolor green]
+   ask patch 4 0 [set pcolor grey set plabel "PT" set plabel-color black]
+
+  ask patches [set ultima-subasta 0 set num_ofertas_ronda 0 set tasa-exito-subasta 0]
 end
+
 
 to diferenciacion
-  if P1 > 0 [ask n-of (P1 / Lote_min) walkers with [color = white] [set color red set tpM1 T_P1_M1 set tpM2 T_P1_M2 set tmp-entrega Entrega_P1 ]]
-  if P2 > 0 [ask n-of (P2 / Lote_min) walkers with [color = white] [set color green set tpM1 T_P2_M1 set tpM2 T_P2_M2 set tmp-entrega Entrega_P2 ]]
-  if P3 > 0 [ask n-of (P3 / Lote_min) walkers with [color = white] [set color blue set tpM1 T_P3_M1 set tpM2 T_P3_M2 set tmp-entrega Entrega_P3 ]]
-  if P4 > 0 [ask n-of (P4 / Lote_min) walkers with [color = white] [set color yellow set tpM1 T_P4_M1 set tpM2 T_P4_M2 set tmp-entrega Entrega_P4]]
-  if P5 > 0 [ask n-of (P5 / Lote_min) walkers with [color = white] [set color pink set tpM1 T_P5_M1 set tpM2 T_P5_M2 set tmp-entrega Entrega_P5]]
-  if P6 > 0 [ask n-of (P6 / Lote_min) walkers with [color = white] [set color brown set tpM1 T_P6_M1 set tpM2 T_P6_M2 set tmp-entrega Entrega_P6]]
-
+  if P1 > 0 [ask n-of P1 lotes with [color = white] [set color red set tpM1 T_P1_M1 set tpM2 T_P1_M2  ]]
+  if P2 > 0 [ask n-of P2  lotes with [color = white] [set color cyan set tpM1 T_P2_M1 set tpM2 T_P2_M2  ]]
+  if P3 > 0 [ask n-of P3 lotes with [color = white] [set color blue set tpM1 T_P3_M1 set tpM2 T_P3_M2 ]]
+  if P4 > 0 [ask n-of P4  lotes with [color = white] [set color yellow set tpM1 T_P4_M1 set tpM2 T_P4_M2 ]]
+  if P5 > 0 [ask n-of P5  lotes with [color = white] [set color pink set tpM1 T_P5_M1 set tpM2 T_P5_M2 ]]
+  if P6 > 0 [ask n-of P6  lotes with [color = white] [set color brown set tpM1 T_P6_M1 set tpM2 T_P6_M2 ]]
+  ask lotes [set riesgo_procesamiento_M1 (1 + (tpM1 / 10))
+                set riesgo_procesamiento_M2 (1 + (tpM2 / 10))] ; 10 es el máximo tiempo de procesamiento en una máquina
 end
+
+to fijar-presupuesto-inicial
+  ask lotes [
+              set presupuesto-M1 (Base-presupuesto-procesamiento / tpM1 )
+              set presupuesto-M2 (Base-presupuesto-procesamiento * tpM2 )
+              set oferta_M2 0]
+end
+
+;to posicion ;???
+;
+;  if funcion = "Negociacion"[
+;
+;  ]
+;
+;  if funcion = "Entrenar" [
+;    let aux3 0
+;    set posiciones shuffle (n-values count lotes [i -> i])
+;    foreach [who] of lotes [x -> ask lote x [set poS item aux3 posiciones set aux3 aux3 + 1]]
+;  ]
+;
+;
+;  if funcion = "Makespan" [ask turtles [set poS pos1]]
+;  if funcion = "Tiempo Medio Finalizacion" [ask turtles [set poS pos2]]
+;end
+
+
+;==========================================Procedimientos para la Ejecución====================================================
+
 
 to go
-  ifelse count turtles-on patches with [pcolor = orange] = count turtles
 
-  ;se detiene si todas las tortugas están  en las máquinas tipo dos (ocupadas)
+  ifelse count turtles != count turtles-on patch 4 0 [
 
-  [
-    ;show max [tp] of walkers
-    set final max [tp] of walkers
-    makespan
-    TMFin
-    ask turtles [move-to patch 1 0 set tp 0 set tpp 0 set tiempo 0] posicion ;show poS
-  ]
+  ask lotes-on patch 0 0 [    if not any? lotes-on patches with [plabel = "M1"]
+    [subastar-uso-M1]  ]
 
-  ;si hay tortugas fuera de las máquinas tipo 2
-  [
-    if tiempo = Llegada_pedido [nueva_demanda]
-    ; selecciona al walker que tenga el 'menor poS' igual a poS
-    ask walkers with [min [poS] of turtles-on patches with [plabel = "M1"] = poS]
+  ask turtles-on patches with [plabel = "M1"]
+   [  if tiempo_proceso_actual = round(tpM1 + (tpM1 * (1 - Tasa_M1)))
+      ;si su tiempo_proceso_actual es igual tiempo de procesamiento de la máquina se ejecuta análisis
+      [set tiempo_proceso_actual 0
+        ir_Centro2
+        subastar-uso-M1
+      ]      ]
 
-    [ ;a la tortuga seleccionada se le fija tp igual a tiempo:  !!!!!!!!!!! tp
-      set tp tiempo
+ask turtles-on patches with [plabel = "M2"]
+   [if tiempo_proceso_actual = round(tpM2 + (tpM2 * (1 - Tasa_M2)))
+      ;si su tiempo_proceso_actual es igual tiempo de procesamiento de la máquina se ejecuta análisis
+      [
+          move-to patch 4 0
+       if any? lotes-on patch 2 0 [ifelse count lotes-on patch 2 0 = 1 [ask lotes-on patch 2 0 [move-to patch 3 2] ]  [subastar-uso-M2] ]
+       ]      ]
 
 
-      ifelse tpp = round(tpM1 + (tpM1 * (1 - Tasa_M1)))
-      ;si su tpp es igual tiempo de procesamiento de la máquina se ejecuta analisis
-      [analisis]
-      ;si su tpp es distinto tiempo de procesamiento de la máquina se actualiza su tiempo y tpp
-      [set tiempo tiempo + 1 set tpp tpp + 1]
+ask turtles-on patches with [plabel = "M3"]
+   [if tiempo_proceso_actual = round(tpM2 + (tpM2 * (1 - Tasa_M3)))
+        [set tiempo_proceso_total ticks
+          move-to patch 4 0
+
+          if any? lotes-on patch 2 0 [ifelse count lotes-on patch 2 0 = 1 [ask lotes-on patch 2 0 [move-to patch 3 0] ][subastar-uso-M3]]
+       ]     ]
+
+
+ ask turtles-on patches with [plabel = "M4"]
+   [if tiempo_proceso_actual = round(tpM2 + (tpM2 * (1 - Tasa_M4)))
+      [set tiempo_proceso_total ticks
+        move-to patch 4 0
+          if any? lotes-on patch 2 0 [
+            ifelse count lotes-on patch 2 0 = 1 [ask lotes-on patch 2 0 [move-to patch 3 -2] ][subastar-uso-M4]]
+       ]      ]
+
+
+
+
+  ask patches with [plabel = "M1"] [ifelse any? lotes-here [set pcolor magenta] [set pcolor lime]]
+  ask patches with [plabel = "M2"] [ifelse any? lotes-here [set pcolor orange] [set pcolor green]]
+  ask patches with [plabel = "M3"] [ifelse any? lotes-here [set pcolor orange] [set pcolor green]]
+  ask patches with [plabel = "M4"] [ifelse any? lotes-here [set pcolor orange] [set pcolor green]]
+
+
+
+
+  ; se actualiza los tiempos de proceso de los productos en las máquinas
+
+  ask turtles-on patches with [plabel = "M1" or plabel = "M2" or plabel = "M3"or plabel = "M4"]
+  [set tiempo_proceso_actual tiempo_proceso_actual + 1]
+    tick
     ]
 
-  ]
+    ;resultados
+    [show "fin"
+    set makespan max [tiempo_proceso_total] of lotes
 
-  tick
-end
-
-to posicion ;???
-
-  if funcion = "Negociacion"[
+    ]
 
 
-
-  ]
-
-  if funcion = "Entrenar" [
-    let aux3 0
-    set posiciones shuffle (n-values count walkers [i -> i])
-    foreach [who] of walkers [x -> ask walker x [set poS item aux3 posiciones set aux3 aux3 + 1]]
-  ]
-
-
-  if funcion = "Makespan" [ask turtles [set poS pos1]]
-  if funcion = "Tiempo Medio Finalizacion" [ask turtles [set poS pos2]]
 end
 
 
-to analisis ; primero revisa si las máquinas tipo 2 están vacías, si están ocupadas realiza la función decisión
-  ifelse not any? walkers-on patch 3 2 [move-to patch 3 2 set tp (tp + round(tpM2 + (tpM2 * (1 - Tasa_M2))))][
-    ifelse not any? walkers-on patch 3 0 [move-to patch 3 0 set tp (tp + round(tpM2 + (tpM2 * (1 - Tasa_M3))))][
-      ifelse not any? walkers-on patch 3 -2 [move-to patch 3 -2 set tp (tp + round(tpM2 + (tpM2 * (1 - Tasa_M4))))] [decision]]
+
+;
+;  [
+;    ;show max [tiempo_proceso_total] of lotes
+;    set final max [tiempo_proceso_total] of lotes
+;    makespan
+;    TMFin
+;    ask turtles [move-to patch 1 0 set tiempo_proceso_total 0 set tiempo_proceso_actual 0 set tiempo 0] posicion ;show poS
+;  ]
+
+
+to ir_Centro2 ; primero revisa si las máquinas tipo 2 están vacías, si están ocupadas pasa a la cola para subastar
+  ifelse not any? lotes-on patch 3 2 [move-to patch 3 2 set tiempo_proceso_total (tiempo_proceso_total + round(tpM2 + (tpM2 * (1 - Tasa_M2))))][
+    ifelse not any? lotes-on patch 3 0 [move-to patch 3 0 set tiempo_proceso_total (tiempo_proceso_total + round(tpM2 + (tpM2 * (1 - Tasa_M3))))][
+      ifelse not any? lotes-on patch 3 -2 [move-to patch 3 -2 set tiempo_proceso_total (tiempo_proceso_total + round(tpM2 + (tpM2 * (1 - Tasa_M4))))] [move-to patch 2 0]]
   ]
 end
+
 
 to decision ;???
-  ifelse tp >= min [tp] of walkers-on patches with [pcolor = orange]
+  ifelse tiempo_proceso_total >= min [tiempo_proceso_total] of lotes-on patches with [pcolor = orange]
 
-  ;accion en caso de que tp sea mayor o igual a tp menor en alguna máquina ocupada
+  ;accion en caso de que tiempo_proceso_total sea mayor o igual a tiempo_proceso_total menor en alguna máquina ocupada
   [
-    move-to min-one-of walkers-on patches with [pcolor = orange] [tp] ;moverse a alguna máquina con producto con mínimo tp
-    ;se actualiza el tp según la capacidad de procesamiento de la máquina actual
-    if plabel = "M2" [set tp (tp + round(tpM2 + (tpM2 * (1 - Tasa_M2))))]
-    if plabel = "M3" [set tp (tp + round(tpM2 + (tpM2 * (1 - Tasa_M3))))]
-    if plabel = "M4" [set tp (tp + round(tpM2 + (tpM2 * (1 - Tasa_M4))))]
-    ; se le pide a los otros productos que actualicen su tp al mayor
-    ask other walkers-here [set tp max [tp] of walkers-here]
+    move-to min-one-of lotes-on patches with [pcolor = orange] [tiempo_proceso_total] ;moverse a alguna máquina con producto con mínimo tiempo_proceso_total
+    ;se actualiza el tiempo_proceso_total según la capacidad de procesamiento de la máquina actual
+    if plabel = "M2" [set tiempo_proceso_total (tiempo_proceso_total + round(tpM2 + (tpM2 * (1 - Tasa_M2))))]
+    if plabel = "M3" [set tiempo_proceso_total (tiempo_proceso_total + round(tpM2 + (tpM2 * (1 - Tasa_M3))))]
+    if plabel = "M4" [set tiempo_proceso_total (tiempo_proceso_total + round(tpM2 + (tpM2 * (1 - Tasa_M4))))]
+    ; se le pide a los otros productos que actualicen su tiempo_proceso_total al mayor
+    ask other lotes-here [set tiempo_proceso_total max [tiempo_proceso_total] of lotes-here]
   ]
 
-  ;accion en caso de que tp sea menor al tp menor en alguna máquina ocupada
+  ;accion en caso de que tiempo_proceso_total sea menor al tiempo_proceso_total menor en alguna máquina ocupada
   [
-    move-to min-one-of walkers-on patches with [pcolor = orange] [tp] ;
-    if plabel = "M2" [set tp (max [tp] of other walkers-here + round(tpM2 + (tpM2 * (1 - Tasa_M2))))]
-    if plabel = "M3" [set tp (max [tp] of other walkers-here + round(tpM2 + (tpM2 * (1 - Tasa_M3))))]
-    if plabel = "M4" [set tp (max [tp] of other walkers-here + round(tpM2 + (tpM2 * (1 - Tasa_M4))))]
-    ask other walkers-here [set tp max [tp] of walkers-here]
+    move-to min-one-of lotes-on patches with [pcolor = orange] [tiempo_proceso_total] ;
+    if plabel = "M2" [set tiempo_proceso_total (max [tiempo_proceso_total] of other lotes-here + round(tpM2 + (tpM2 * (1 - Tasa_M2))))]
+    if plabel = "M3" [set tiempo_proceso_total (max [tiempo_proceso_total] of other lotes-here + round(tpM2 + (tpM2 * (1 - Tasa_M3))))]
+    if plabel = "M4" [set tiempo_proceso_total (max [tiempo_proceso_total] of other lotes-here + round(tpM2 + (tpM2 * (1 - Tasa_M4))))]
+    ask other lotes-here [set tiempo_proceso_total max [tiempo_proceso_total] of lotes-here]
   ]
 end
 
+;____________________________________________________________________________________________________________________
 
-to negociar-posicion
+to subastar-uso-M1
+
+
+ if any? lotes-on patch 0 0 [
+    ask lotes-on patch 0 0 [
+      ifelse any? patches with [pcolor = green] [set oferta_M1 1 / tpM1] [set oferta_M1 tpM1] ;
+    ]
+ ask max-one-of lotes-on patch 0 0 [oferta_M1] [move-to patch 1 0 ]
+]
+
+end
+
+to subastar-uso-M2
+
+ if any? lotes-on patches with [plabel = "cola-M2"]   [
+
+ ask max-one-of lotes-on patches with [plabel = "cola-M2"] [tpM2] [move-to patch 3 2 ]
+    ]
+
+end
+
+to subastar-uso-M3
+ if any? lotes-on patches with [plabel = "cola-M2"]   [
+
+ ask max-one-of lotes-on patches with [plabel = "cola-M2"] [tpM2] [move-to patch 3 0 ]
+    ]
+
+end
+
+
+to subastar-uso-M4
+ if any? lotes-on patches with [plabel = "cola-M2"]   [
+
+ ask max-one-of lotes-on patches with [plabel = "cola-M2"] [tpM2] [move-to patch 3 -2 ]
+    ]
 
 
 end
 
 
 
-to makespan ;???
-  set ite (sentence ite final) set ite remove 0 ite ;https://ccl.northwestern.edu/netlogo/docs/dictionary.html#se
-  show ite ;debugging
-  if min ite = final [ask turtles [set pos1 poS]]
-end
 
-to TMFin ;???
-  ask turtles-on patch 3 2 [set max1 ((max [tp] of walkers-here) / count walkers-here)]
-  ask turtles-on patch 3 0 [set max2 ((max [tp] of walkers-here) / count walkers-here)]
-  ask turtles-on patch 3 -2 [set max3 ((max [tp] of walkers-here) / count walkers-here)]
 
-  set ite2 (se ite2 precision ((max1 + max2 + max3) / 3) 3) set ite2 remove 0 ite2
-  if min ite2 = precision ((max1 + max2 + max3) / 3) 3 [ask turtles [set pos2 poS]]
-end
+;to to-makespan ;???
+;  set ite (sentence ite final) set ite remove 0 ite ;https://ccl.northwestern.edu/netlogo/docs/dictionary.html#se
+;  show ite ;debugging
+;  if min ite = final [ask turtles [set pos1 poS]]
+;end
+;
+;to TMFin ;???
+;  ask turtles-on patch 3 2 [set max1 ((max [tiempo_proceso_total] of lotes-here) / count lotes-here)]
+;  ask turtles-on patch 3 0 [set max2 ((max [tiempo_proceso_total] of lotes-here) / count lotes-here)]
+;  ask turtles-on patch 3 -2 [set max3 ((max [tiempo_proceso_total] of lotes-here) / count lotes-here)]
+;
+;  set ite2 (se ite2 precision ((max1 + max2 + max3) / 3) 3) set ite2 remove 0 ite2
+;  if min ite2 = precision ((max1 + max2 + max3) / 3) 3 [ask turtles [set pos2 poS]]
+;end
 
 to nueva_demanda
-  create-walkers (nP1 + nP2 + nP3 + nP4 + nP5 + nP6) / Lote_min [
+  create-lotes nP1 + nP2 + nP3 + nP4 + nP5 + nP6 [
     set color white
-    move-to patch 1 0
+    move-to patch 0 0
     set size 0.5 set heading 90
     set label who
   ]
   diferenciacion2
-  posicion2
+  fijar_presupuesto_nuevos_lotes
 end
 
 to diferenciacion2
-  if nP1 > 0 [ask n-of (nP1 / Lote_min) walkers with [color = white] [set color red set tpM1 T_P1_M1 set tpM2 T_P1_M2  set tmp-entrega Entrega_P1 + tiempo ]]
-  if nP2 > 0 [ask n-of (nP2 / Lote_min) walkers with [color = white] [set color green set tpM1 T_P2_M1 set tpM2 T_P2_M2  set tmp-entrega Entrega_P2 + tiempo  ]]
-  if nP3 > 0 [ask n-of (nP3 / Lote_min) walkers with [color = white] [set color blue set tpM1 T_P3_M1 set tpM2 T_P3_M2 set tmp-entrega Entrega_P3 + tiempo  ]]
-  if nP4 > 0 [ask n-of (nP4 / Lote_min) walkers with [color = white] [set color yellow set tpM1 T_P4_M1 set tpM2 T_P4_M2 set tmp-entrega Entrega_P4 + tiempo  ]]
-  if nP5 > 0 [ask n-of (nP5 / Lote_min) walkers with [color = white] [set color pink set tpM1 T_P5_M1 set tpM2 T_P5_M2 set tmp-entrega Entrega_P5 + tiempo  ]]
-  if nP6 > 0 [ask n-of (nP6 / Lote_min) walkers with [color = white] [set color brown set tpM1 T_P6_M1 set tpM2 T_P6_M2 set tmp-entrega Entrega_P6 + tiempo  ]]
+  if nP1 > 0 [ask n-of nP1 lotes with [color = white] [set color red set tpM1 T_P1_M1 set tpM2 T_P1_M2  ]]
+  if nP2 > 0 [ask n-of nP2 lotes with [color = white] [set color green set tpM1 T_P2_M1 set tpM2 T_P2_M2  ]]
+  if nP3 > 0 [ask n-of nP3 lotes with [color = white] [set color blue set tpM1 T_P3_M1 set tpM2 T_P3_M2 ]]
+  if nP4 > 0 [ask n-of nP4 lotes with [color = white] [set color yellow set tpM1 T_P4_M1 set tpM2 T_P4_M2 ]]
+  if nP5 > 0 [ask n-of nP5 lotes with [color = white] [set color pink set tpM1 T_P5_M1 set tpM2 T_P5_M2   ]]
+  if nP6 > 0 [ask n-of nP6 lotes with [color = white] [set color brown set tpM1 T_P6_M1 set tpM2 T_P6_M2   ]]
 
 end
 
-to posicion2
-  if funcion = "Entrenar" [
-    let aux3 0
-    set posiciones shuffle (n-values count walkers [i -> i])
-    foreach [who] of walkers [x -> ask walker x [set poS item aux3 posiciones set aux3 aux3 + 1]]
-  ]
-  if funcion = "Makespan" [ask turtles [set poS pos1]]
-  if funcion = "Tiempo Medio Finalizacion" [ask turtles [set poS pos2]]
+to fijar_presupuesto_nuevos_lotes
+  ask turtles-on patch 0 0   [
+
+    if presupuesto-M1 = 0 [
+              set presupuesto-M1 (Base-presupuesto-procesamiento / tpM1 )
+              set presupuesto-M2 (Base-presupuesto-procesamiento * tpM2 )
+              set oferta_M2 0]  ]
+
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-10
-10
-528
-409
+151
+16
+506
+511
 -1
 -1
-30.0
+69.43
 1
 10
 1
@@ -198,26 +303,15 @@ GRAPHICS-WINDOW
 1
 1
 1
--8
-8
--6
-6
+0
+4
+-3
+3
 0
 0
 1
 ticks
 30.0
-
-INPUTBOX
-533
-12
-688
-72
-Lote_min
-100.0
-1
-0
-Number
 
 BUTTON
 699
@@ -269,36 +363,36 @@ INPUTBOX
 583
 142
 P1
-300.0
+101.0
 1
 0
 Number
 
 SLIDER
-691
-90
-783
-123
+605
+99
+697
+132
 T_P1_M1
 T_P1_M1
-0
+1
 10
-10.0
+2.0
 1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-790
-90
-882
-123
+704
+99
+796
+132
 T_P1_M2
 T_P1_M2
-0
-10
-10.0
+3
+60
+8.0
 1
 1
 NIL
@@ -316,13 +410,13 @@ P2
 Number
 
 SLIDER
-690
-167
-782
-200
+604
+176
+696
+209
 T_P2_M1
 T_P2_M1
-0
+1
 10
 10.0
 1
@@ -331,15 +425,15 @@ NIL
 HORIZONTAL
 
 SLIDER
-789
-167
-881
-200
+703
+176
+795
+209
 T_P2_M2
 T_P2_M2
-0
-10
-10.0
+3
+100
+41.0
 1
 1
 NIL
@@ -362,7 +456,7 @@ INPUTBOX
 581
 358
 P4
-100.0
+0.0
 1
 0
 Number
@@ -390,43 +484,43 @@ P6
 Number
 
 SLIDER
-689
-237
-781
-270
+603
+246
+695
+279
 T_P3_M1
 T_P3_M1
-0
+1
 10
-10.0
+8.0
 1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-789
-237
-881
-270
+703
+246
+795
+279
 T_P3_M2
 T_P3_M2
-0
-10
-10.0
+3
+100
+42.0
 1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-689
-307
-781
-340
+603
+316
+695
+349
 T_P4_M1
 T_P4_M1
-0
+1
 10
 10.0
 1
@@ -435,28 +529,28 @@ NIL
 HORIZONTAL
 
 SLIDER
-788
-307
-880
-340
+702
+316
+794
+349
 T_P4_M2
 T_P4_M2
-0
-10
-10.0
+3
+100
+40.0
 1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-688
-372
-780
-405
+602
+381
+694
+414
 T_P5_M1
 T_P5_M1
-0
+1
 10
 10.0
 1
@@ -465,13 +559,28 @@ NIL
 HORIZONTAL
 
 SLIDER
-786
-372
-878
-405
+700
+381
+792
+414
 T_P5_M2
 T_P5_M2
-0
+3
+100
+50.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+601
+446
+693
+479
+T_P6_M1
+T_P6_M1
+1
 10
 10.0
 1
@@ -480,30 +589,15 @@ NIL
 HORIZONTAL
 
 SLIDER
-687
-437
-779
-470
-T_P6_M1
-T_P6_M1
-0
-10
-10.0
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-785
-437
-877
-470
+699
+446
+791
+479
 T_P6_M2
 T_P6_M2
-0
-10
-10.0
+3
+100
+52.0
 1
 1
 NIL
@@ -614,7 +708,7 @@ INPUTBOX
 1354
 278
 nP3
-200.0
+20.0
 1
 0
 Number
@@ -625,7 +719,7 @@ INPUTBOX
 1355
 346
 nP4
-1000.0
+10.0
 1
 0
 Number
@@ -636,7 +730,7 @@ INPUTBOX
 1357
 421
 nP5
-100.0
+10.0
 1
 0
 Number
@@ -652,190 +746,89 @@ nP6
 0
 Number
 
-PLOT
-1065
-297
-1265
-447
-plot 1
-NIL
-NIL
-0.0
-1000.0
-0.0
-1000.0
-true
-false
-"" ""
-PENS
-"default" 1.0 0 -16777216 true "" "plot ite"
-
-INPUTBOX
-591
-82
-673
-142
-Entrega_P1
-1000.0
-1
-0
-Number
-
-INPUTBOX
-593
-158
-671
-218
-Entrega_P2
-1000.0
-1
-0
-Number
-
-INPUTBOX
-594
-228
-674
-288
-Entrega_P3
-1000.0
-1
-0
-Number
-
-INPUTBOX
-596
-295
-673
-355
-Entrega_P4
-3000.0
-1
-0
-Number
-
-INPUTBOX
-595
-367
-673
-427
-Entrega_P5
-2000.0
-1
-0
-Number
-
-INPUTBOX
-598
-432
-670
-492
-Entrega_P6
-2500.0
-1
-0
-Number
-
-SLIDER
-905
-94
-997
-127
-Multa_P1
-Multa_P1
-0
-10
-10.0
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-900
-165
-992
-198
-Multa_P2
-Multa_P2
-0
-10
-1.0
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-899
-233
-991
-266
-Multa_P3
-Multa_P3
-0
-10
-1.0
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-915
-308
-1007
-341
-Multa_P4
-Multa_P4
-0
-10
-1.0
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-904
-373
-996
-406
-Multa_P5
-Multa_P5
-0
-10
-1.0
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-914
-435
-1006
-468
-Multa_P6
-Multa_P6
-0
-10
-1.0
-1
-1
-NIL
-HORIZONTAL
-
 INPUTBOX
 1265
 11
 1357
 71
 Llegada_pedido
-500.0
+30.0
 1
 0
 Number
+
+SLIDER
+694
+517
+894
+550
+Base-presupuesto-procesamiento
+Base-presupuesto-procesamiento
+0
+100
+60.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+908
+519
+1080
+552
+Max-costo-proc
+Max-costo-proc
+0
+1000
+210.0
+10
+1
+NIL
+HORIZONTAL
+
+SLIDER
+1093
+518
+1265
+551
+Max-desc-subasta
+Max-desc-subasta
+0
+100
+62.0
+1
+1
+NIL
+HORIZONTAL
+
+MONITOR
+942
+129
+1011
+174
+Makespan
+makespan
+17
+1
+11
+
+BUTTON
+762
+65
+837
+98
+go once
+go
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
