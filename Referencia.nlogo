@@ -21,17 +21,15 @@ to setup
     set color white
     move-to patch 0 0 ;funcionará como cola para M1
     set size 0.5 set heading 90
-    ;set label who
+    set label who
 
   ]
 
 
   diferenciacion
 
-  ask lotes [set label tpM1]
-
-  ;foreach [tpM1] of lotes
-  ; [ a -> set tmp_M1 tmp_M1 + a ]
+  foreach [tpM1] of lotes
+   [ a -> set tmp_M1 tmp_M1 + a ]
 
 
   reset-ticks
@@ -130,18 +128,9 @@ ask turtles-on patches with [plabel = "M3"]
 
   ask lotes-on patches with [plabel = "M1" or plabel = "M2" or plabel = "M3"or plabel = "M4"]
   [set tiempo_proceso_actual tiempo_proceso_actual + 1
-
+    set label tiempo_proceso_actual ;TODO debug
     ]
 
- ask lotes-on patches with [plabel = "M2" or plabel = "M3"or plabel = "M4"]
-  [
-    set label tpM2 - tiempo_proceso_actual ;TODO debug
-    ]
-
-ask lotes-on patches with [plabel = "M1" ]
-  [
-    set label tpM1 - tiempo_proceso_actual ;TODO debug
-    ]
 
     tick
 
@@ -169,47 +158,13 @@ end
 to subastar-uso-M1
 
 
- if any? lotes-on patch 0 0
- [
+ if any? lotes-on patch 0 0 [
     if Heuristica = "Propuesta" [ask lotes-on patch 0 0 [set oferta_M1 1 / tpM1]
     ask max-one-of lotes-on patch 0 0 [oferta_M1] [move-to patch 1 0 set tmp_esperado_M1 tmp_esperado_M1 + tpM1]  ]
 
     if Heuristica = "SPT" [ask min-one-of lotes-on patch 0 0 [tpM1] [move-to patch 1 0]  ]
 
-    if Heuristica ="Propuesta2"
-    [ ;TODO
 
-      let maquinas_centro_2 (patch-set patch 3 2 patch 3 -2  patch 3 0)
-
-      (ifelse any? patches with [pcolor = green]
-
-                [ask min-one-of lotes-on patch 0 0 [tpM1] [move-to patch 1 0]  ]
-
-            any? lotes-on patches with [plabel = "cola-M2"]
-
-            [
-            let lote_en_cola_proceso_mas_largo max-one-of (lotes-on patches with [plabel = "cola-M2"]) [tpM2]
-            let proceso_mas_largo_cola [tpM2] of lote_en_cola_proceso_mas_largo
-            let lotes_elegibles (lotes-on patch 0 0) with [tpM1 < proceso_mas_largo_cola]
-
-             ask max-one-of lotes_elegibles [tpM1] [move-to patch 1 0]
-
-            ]
-
-      ;else
-      [
-        let lote_proximo_termino min-one-of lotes-on maquinas_centro_2 [tpM2 - tiempo_proceso_actual]
-        let proximo_termino [tpM2 - tiempo_proceso_actual] of lote_proximo_termino
-        let lotes_elegibles (lotes-on patch 0 0) with [tpM1 < proximo_termino]
-
-
-
-        ifelse any? lotes_elegibles
-          [ask max-one-of lotes_elegibles [tpM1] [move-to patch 1 0]   ]
-          [ask min-one-of lotes-on patch 0 0 [tpM1] [move-to patch 1 0]   ]
-        ]
-      )
-      ]
   ]
 
 end
@@ -218,10 +173,7 @@ to subastar-uso-M2
 
  if any? lotes-on patches with [plabel = "cola-M2"]   [
   if Heuristica = "Propuesta" [ask max-one-of lotes-on patches with [plabel = "cola-M2"] [tpM2] [move-to patch 3 2 ]]
-  if Heuristica = "Propuesta2" [ask max-one-of lotes-on patches with [plabel = "cola-M2"] [tpM2] [move-to patch 3 2 ]]
-
   if Heuristica = "SPT" [ask min-one-of lotes-on patches with [plabel = "cola-M2"] [tpM2] [move-to patch 3 2]  ]
-
   ]
 
 
@@ -231,7 +183,6 @@ end
 to subastar-uso-M3
  if any? lotes-on patches with [plabel = "cola-M2"]   [
     if Heuristica = "Propuesta" [ask max-one-of lotes-on patches with [plabel = "cola-M2"] [tpM2] [move-to patch 3 0 ]]
-    if Heuristica = "Propuesta2" [ask max-one-of lotes-on patches with [plabel = "cola-M2"] [tpM2] [move-to patch 3 0 ]]
     if Heuristica = "SPT" [ask min-one-of lotes-on patches with [plabel = "cola-M2"] [tpM2] [move-to patch 3 0 ]  ]
   ]
 
@@ -241,7 +192,6 @@ end
 to subastar-uso-M4
  if any? lotes-on patches with [plabel = "cola-M2"]   [
     if Heuristica = "Propuesta" [ask max-one-of lotes-on patches with [plabel = "cola-M2"] [tpM2] [move-to patch 3 -2 ]  ]
-    if Heuristica = "Propuesta2" [ask max-one-of lotes-on patches with [plabel = "cola-M2"] [tpM2] [move-to patch 3 -2 ]  ]
     if Heuristica = "SPT" [ask min-one-of lotes-on patches with [plabel = "cola-M2"] [tpM2] [move-to patch 3 -2 ]  ]
   ]
 
@@ -575,7 +525,7 @@ INPUTBOX
 897
 72
 Llegada_pedido
-30.0
+59.0
 1
 0
 Number
@@ -719,13 +669,13 @@ tmp_utilizacion_M4
 11
 
 CHOOSER
-6
-108
-144
-153
+263
+544
+401
+589
 Heuristica
 Heuristica
-"SPT" "Propuesta" "Propuesta2"
+"SPT" "Propuesta"
 1
 
 @#$#@#$#@
@@ -1687,301 +1637,6 @@ NetLogo 6.1.1
     <enumeratedValueSet variable="Heuristica">
       <value value="&quot;SPT&quot;"/>
       <value value="&quot;Propuesta&quot;"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="Llegada_pedido">
-      <value value="1"/>
-      <value value="2"/>
-      <value value="3"/>
-      <value value="4"/>
-      <value value="5"/>
-      <value value="6"/>
-      <value value="7"/>
-      <value value="8"/>
-      <value value="9"/>
-      <value value="10"/>
-      <value value="11"/>
-      <value value="12"/>
-      <value value="13"/>
-      <value value="14"/>
-      <value value="15"/>
-      <value value="16"/>
-      <value value="17"/>
-      <value value="18"/>
-      <value value="19"/>
-      <value value="20"/>
-      <value value="21"/>
-      <value value="22"/>
-      <value value="23"/>
-      <value value="24"/>
-      <value value="25"/>
-      <value value="26"/>
-      <value value="27"/>
-      <value value="28"/>
-      <value value="29"/>
-      <value value="30"/>
-      <value value="31"/>
-      <value value="32"/>
-      <value value="33"/>
-      <value value="34"/>
-      <value value="35"/>
-      <value value="36"/>
-      <value value="37"/>
-      <value value="38"/>
-      <value value="39"/>
-      <value value="40"/>
-      <value value="41"/>
-      <value value="42"/>
-      <value value="43"/>
-      <value value="44"/>
-      <value value="45"/>
-      <value value="46"/>
-      <value value="47"/>
-      <value value="48"/>
-      <value value="49"/>
-      <value value="50"/>
-      <value value="51"/>
-      <value value="52"/>
-      <value value="53"/>
-      <value value="54"/>
-      <value value="55"/>
-      <value value="56"/>
-      <value value="57"/>
-      <value value="58"/>
-      <value value="59"/>
-      <value value="60"/>
-    </enumeratedValueSet>
-  </experiment>
-  <experiment name="experiment7 spt vs propuesta vs propuesta2 60 tiempos" repetitions="1" runMetricsEveryStep="false">
-    <setup>setup</setup>
-    <go>go</go>
-    <metric>makespan</metric>
-    <metric>registro_M1</metric>
-    <metric>tmp_utilizacion_M2</metric>
-    <metric>tmp_utilizacion_M3</metric>
-    <metric>tmp_utilizacion_M4</metric>
-    <enumeratedValueSet variable="T_P6_M2">
-      <value value="20"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="P2">
-      <value value="4"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="P3">
-      <value value="3"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="T_P5_M2">
-      <value value="15"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="P4">
-      <value value="2"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="T_P4_M2">
-      <value value="8"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="Tasa_M1">
-      <value value="1"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="P5">
-      <value value="3"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="T_P3_M2">
-      <value value="9"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="P6">
-      <value value="2"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="T_P2_M2">
-      <value value="12"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="T_P1_M1">
-      <value value="1"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="T_P1_M2">
-      <value value="7"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="nP6">
-      <value value="1"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="T_P6_M1">
-      <value value="4"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="P1">
-      <value value="4"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="T_P5_M1">
-      <value value="6"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="T_P4_M1">
-      <value value="2"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="nP1">
-      <value value="4"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="T_P3_M1">
-      <value value="3"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="nP2">
-      <value value="1"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="nP3">
-      <value value="5"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="T_P2_M1">
-      <value value="5"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="nP4">
-      <value value="2"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="nP5">
-      <value value="3"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="Heuristica">
-      <value value="&quot;SPT&quot;"/>
-      <value value="&quot;Propuesta&quot;"/>
-      <value value="&quot;Propuesta2&quot;"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="Llegada_pedido">
-      <value value="1"/>
-      <value value="2"/>
-      <value value="3"/>
-      <value value="4"/>
-      <value value="5"/>
-      <value value="6"/>
-      <value value="7"/>
-      <value value="8"/>
-      <value value="9"/>
-      <value value="10"/>
-      <value value="11"/>
-      <value value="12"/>
-      <value value="13"/>
-      <value value="14"/>
-      <value value="15"/>
-      <value value="16"/>
-      <value value="17"/>
-      <value value="18"/>
-      <value value="19"/>
-      <value value="20"/>
-      <value value="21"/>
-      <value value="22"/>
-      <value value="23"/>
-      <value value="24"/>
-      <value value="25"/>
-      <value value="26"/>
-      <value value="27"/>
-      <value value="28"/>
-      <value value="29"/>
-      <value value="30"/>
-      <value value="31"/>
-      <value value="32"/>
-      <value value="33"/>
-      <value value="34"/>
-      <value value="35"/>
-      <value value="36"/>
-      <value value="37"/>
-      <value value="38"/>
-      <value value="39"/>
-      <value value="40"/>
-      <value value="41"/>
-      <value value="42"/>
-      <value value="43"/>
-      <value value="44"/>
-      <value value="45"/>
-      <value value="46"/>
-      <value value="47"/>
-      <value value="48"/>
-      <value value="49"/>
-      <value value="50"/>
-      <value value="51"/>
-      <value value="52"/>
-      <value value="53"/>
-      <value value="54"/>
-      <value value="55"/>
-      <value value="56"/>
-      <value value="57"/>
-      <value value="58"/>
-      <value value="59"/>
-      <value value="60"/>
-    </enumeratedValueSet>
-  </experiment>
-  <experiment name="experiment7 propuesta 1 2 vs SPT" repetitions="1" runMetricsEveryStep="true">
-    <setup>setup</setup>
-    <go>go</go>
-    <metric>makespan</metric>
-    <enumeratedValueSet variable="T_P1_M1">
-      <value value="1"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="T_P1_M2">
-      <value value="7"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="nP6">
-      <value value="1"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="T_P6_M1">
-      <value value="4"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="P1">
-      <value value="4"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="T_P5_M1">
-      <value value="6"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="T_P4_M1">
-      <value value="2"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="nP1">
-      <value value="4"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="P2">
-      <value value="4"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="T_P6_M2">
-      <value value="20"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="T_P3_M1">
-      <value value="3"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="nP2">
-      <value value="1"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="P3">
-      <value value="3"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="T_P5_M2">
-      <value value="15"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="nP3">
-      <value value="5"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="P4">
-      <value value="2"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="T_P2_M1">
-      <value value="5"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="T_P4_M2">
-      <value value="8"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="nP4">
-      <value value="2"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="P5">
-      <value value="3"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="nP5">
-      <value value="3"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="T_P3_M2">
-      <value value="9"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="P6">
-      <value value="2"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="T_P2_M2">
-      <value value="12"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="Heuristica">
-      <value value="&quot;SPT&quot;"/>
-      <value value="&quot;Propuesta&quot;"/>
-      <value value="&quot;Propuesta2&quot;"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="Llegada_pedido">
       <value value="1"/>
